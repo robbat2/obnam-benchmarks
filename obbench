@@ -44,8 +44,9 @@ class ObnamBenchmarker(cliapp.Application):
 
     def run_all_benchmarks(self, spec, treeish, tempdir):
         checkout = self.get_treeish(spec, treeish, tempdir)
+        self.prepare_obnam(checkout)
         for benchmark in spec.get('benchmarks', []):
-            result = self.run_one_benchmark(benchmark, checkout)
+            result = self.run_one_benchmark(benchmark, tempdir, checkout)
             self.save_result(spec, result)
 
     def get_treeish(self, spec, treeish, tempdir):
@@ -56,22 +57,53 @@ class ObnamBenchmarker(cliapp.Application):
         cliapp.runcmd(['git', 'clean', '-fdxq'], cwd=checkout)
         return checkout
 
-    def run_one_benchmark(self, benchmark, checkout):
+    def prepare_obnam(self, checkout):
+        cliapp.runcmd(['python', 'setup.py', 'build_ext', '-i'], cwd=checkout)
+
+    def run_one_benchmark(self, benchmark, tempdir, checkout):
         result = BenchmarkResult()
         result.collect_info_from_spec(benchmark)
         result.collect_info_from_checkout(checkout)
+        config = self.create_obnam_config(benchmark, tempdir)
+        live = self.create_live_dir(tempdir)
         for step in benchmark.get('steps', []):
-            self.run_benchmark_step(step, checkout, result)
+            self.run_benchmark_step(step, checkout, config, live, result)
         return result
 
-    def run_benchmark_step(self, step, checkout, result):
-        step_info = dict(step)
+    def create_obnam_config(self, spec, tempdir):
+        config = os.path.join(tempdir, 'obnam.conf')
+        with open(config, 'w') as f:
+            f.write('[config]\n')
+            f.write('repository = %s\n' % os.path.join(tempdir, 'repo'))
+            f.write('root = %s\n' % self.get_live_data(tempdir))
+        return config
+
+    def get_live_data(self, tempdir):
+        return os.path.join(tempdir, 'live')
+
+    def create_live_dir(self, tempdir):
+        live = self.get_live_data(tempdir)
+        if os.path.exists(live):
+            shutil.rmtree(live)
+        os.mkdir(live)
+        return live
+
+    def run_benchmark_step(self, step, checkout, config, live, result):
         if 'live' in step:
-            cliapp.runcmd(['sh', '-euc', step['live']], cwd=checkout)
+            cliapp.runcmd(['sh', '-euc', step['live']], cwd=live)
+
         started = time.time()
+        self.run_obnam(checkout, ['backup', '--config', config])
         ended = time.time()
+
+        step_info = dict(step)
         step_info['duration'] = ended - started
         result.add_step(step_info)
+
+    def run_obnam(self, checkout, args):
+        cliapp.runcmd(
+            ['./obnam', '--no-default-config'] + args,
+            cwd=checkout)
 
     def save_result(self, spec, result):
         obj = result.as_dict()
