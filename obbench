@@ -31,26 +31,29 @@ class ObnamBenchmarker(cliapp.Application):
         if not args:
             raise cliapp.AppException('Need benchmark spec filename')
         spec = self.read_benchmark_spec(args[0])
+        tempdir = tempfile.mkdtemp()
         for treeish in args[1:]:
-            self.run_all_benchmarks(spec, treeish)
+            self.run_all_benchmarks(spec, treeish, tempdir)
         self.generate_html(spec)
+        shutil.rmtree(tempdir)
 
     def read_benchmark_spec(self, filename):
         with open(filename) as f:
             return yaml.safe_load(f)
 
-    def run_all_benchmarks(self, spec, treeish):
-        checkout = self.get_treeish(spec, treeish)
+    def run_all_benchmarks(self, spec, treeish, tempdir):
+        checkout = self.get_treeish(spec, treeish, tempdir)
         for benchmark in spec.get('benchmarks', []):
             result = self.run_one_benchmark(benchmark, checkout)
             self.save_result(spec, result)
-        shutil.rmtree(checkout)
 
-    def get_treeish(self, spec, treeish):
-        tempdir = tempfile.mkdtemp()
-        cliapp.runcmd(['git', 'clone', spec['git'], tempdir])
-        cliapp.runcmd(['git', 'checkout', treeish], cwd=tempdir)
-        return tempdir
+    def get_treeish(self, spec, treeish, tempdir):
+        checkout = os.path.join(tempdir, 'git')
+        if not os.path.exists(checkout):
+            cliapp.runcmd(['git', 'clone', spec['git'], checkout])
+        cliapp.runcmd(['git', 'checkout', treeish], cwd=checkout)
+        cliapp.runcmd(['git', 'clean', '-fdxq'], cwd=checkout)
+        return checkout
 
     def run_one_benchmark(self, benchmark, checkout):
         result = BenchmarkResult()
