@@ -160,6 +160,7 @@ class ObnamBenchmarker(cliapp.Application):
         for obj in objs:
             self.write_benchmark_page(spec, obj)
         self.write_summary_page(spec, objs)
+        self.copy_css_file(spec)
 
     def read_results_files(self, spec):
         objs = []
@@ -182,6 +183,8 @@ class ObnamBenchmarker(cliapp.Application):
                 '<title>Obnam benchmark: {commit} {name}</title>\n'.format(
                     commit=self.q(obj['commit_id']),
                     name=self.q(obj['name'])))
+            f.write('<link rel="stylesheet" href="benchmark.css"\n')
+            f.write('      type="text/css" />\n')
             f.write('</head>\n')
 
             f.write('<body>\n')
@@ -228,6 +231,8 @@ class ObnamBenchmarker(cliapp.Application):
 
             f.write('<head>\n')
             f.write('<title>Obnam benchmark: summary</title>\n')
+            f.write('<link rel="stylesheet" href="benchmark.css"\n')
+            f.write('      type="text/css" />\n')
             f.write('</head>\n')
 
             f.write('<body>\n')
@@ -292,6 +297,10 @@ class ObnamBenchmarker(cliapp.Application):
                 runs[-1]['durations'][obj['name']] = total(obj)
 
         return runs
+
+    def copy_css_file(self, spec):
+        filename = os.path.join(spec['html_dir'], 'benchmark.css')
+        shutil.copy('benchmark.css', filename)
 
 
 class BenchmarkResult(object):
