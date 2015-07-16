@@ -265,11 +265,13 @@ class ObnamBenchmarker(cliapp.Application):
 
             for run in runs:
                 f.write('<tr>\n')
-                f.write('<td>{date}</td>\n'.format(date=self.q(run['date'])))
                 f.write(
-                    '<td>{commit}</td>\n'.format(
+                    '<td class="date">{date}</td>\n'.format(
+                        date=self.q(run['date'])))
+                f.write(
+                    '<td class="commitid">{commit}</td>\n'.format(
                         commit=self.q(run['commit_id'])))
-                f.write('<td>{msg}</td>\n'.format(
+                f.write('<td class="commitmsg">{msg}</td>\n'.format(
                     msg=self.q(run['commit_msg'])))
 
                 for name in benchmark_names:
@@ -278,7 +280,8 @@ class ObnamBenchmarker(cliapp.Application):
                         name=self.q(name))
                     duration = '%.1f' % run['durations'][name]
                     f.write(
-                        '<td><a href="{link}">{duration}</a></td>\n'.format(
+                        '<td class="duration">'
+                        '<a href="{link}">{duration}</a></td>\n'.format(
                             link=link,
                             duration=self.q(duration)))
                 f.write('</tr>\n')

@@ -6,6 +6,18 @@ th {
 }
 th, td {
     border-right: solid 1px;
-    text-align: right;
     font-family: monospace;
+}
+th.duration, td.duration {
+    text-align: right;
+}
+td.date {
+    width: 25em;
+}
+td.commitid {
+    width: 7em;
+}
+td.commitmsg {
+    width: 30em;
+    text-align: left;
 }
