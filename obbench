@@ -17,6 +17,7 @@
 # =*= License: GPL-3+ =*=
 
 
+import glob
 import os
 import shutil
 import tempfile
@@ -132,11 +133,145 @@ class ObnamBenchmarker(cliapp.Application):
 
     def get_report_pathname(self, spec, benchmark, result):
         return os.path.join(
-            spec['reports-dir'],
+            spec['reports_dir'],
             '%s_%s.yaml' % (result.get_commit_id(), benchmark['name']))
 
     def generate_html(self, spec):
-        pass
+        objs = self.read_results_files(spec)
+        for obj in objs:
+            self.write_benchmark_page(spec, obj)
+        self.write_summary_page(spec, objs)
+
+    def read_results_files(self, spec):
+        objs = []
+        for filename in glob.glob(os.path.join(spec['reports_dir'], '*.yaml')):
+            with open(filename) as f:
+                objs.append(yaml.safe_load(f))
+        return objs
+
+    def write_benchmark_page(self, spec, obj):
+        steps = [s for s in obj['steps'] if 'obnam' in s]
+
+        filename = os.path.join(
+            spec['html_dir'],
+            '{}_{}.html'.format(obj['commit_id'], obj['name']))
+        with open(filename, 'w') as f:
+            f.write('<html>\n')
+
+            f.write('<head>\n')
+            f.write(
+                '<title>Obnam benchmark: {commit} {name}</title>\n'.format(
+                    commit=self.q(obj['commit_id']),
+                    name=self.q(obj['name'])))
+            f.write('</head>\n')
+
+            f.write('<body>\n')
+            f.write(
+                '<h1>Obnam benchmark: {commit} {name}</h1>\n'.format(
+                    commit=self.q(obj['commit_id']),
+                    name=self.q(obj['name'])))
+            f.write('<table>\n')
+
+            f.write('<tr>\n')
+            for step in steps:
+                f.write(
+                    '<th>{action}</th>\n'.format(
+                        action=self.q(step['obnam'])))
+            f.write('</tr>\n')
+
+            f.write('<tr>\n')
+            for step in steps:
+                f.write(
+                    '<td>{duration}</td>\n'.format(
+                        duration=self.q(step['duration'])))
+            f.write('</tr>\n')
+
+            f.write('</table>\n')
+            f.write('</body>\n')
+
+            f.write('</html>\n')
+
+    def q(self, text):
+        '''Quote for HTML'''
+        text = str(text)
+        text = '&amp;'.join(text.split('&'))
+        text = '&lt;'.join(text.split('<'))
+        text = '&gt;'.join(text.split('>'))
+        return text
+
+    def write_summary_page(self, spec, objs):
+        benchmark_names = self.find_benchmark_names(objs)
+        runs = self.create_table_of_benchmark_runs(benchmark_names, objs)
+
+        filename = os.path.join(spec['html_dir'], 'index.html')
+        with open(filename, 'w') as f:
+            f.write('<html>\n')
+
+            f.write('<head>\n')
+            f.write('<title>Obnam benchmark: summary</title>\n')
+            f.write('</head>\n')
+
+            f.write('<body>\n')
+            f.write('<h1>Obnam benchmark: summary</h1>\n')
+            f.write('<table>\n')
+
+            f.write('<tr>\n')
+            f.write('<th>date</th>\n')
+            f.write('<th>commit</th>\n')
+            for name in benchmark_names:
+                f.write('<th>{name}</th>\n'.format(name=self.q(name)))
+            f.write('</tr>\n')
+
+            for run in runs:
+                f.write('<tr>\n')
+                f.write('<td>{date}</td>\n'.format(date=self.q(run['date'])))
+                f.write(
+                    '<td>{commit}</td>\n'.format(
+                        commit=self.q(run['commit_id'])))
+
+                for name in benchmark_names:
+                    link = '{commit}_{name}.html'.format(
+                        commit=self.q(run['commit_id']),
+                        name=self.q(name))
+                    f.write(
+                        '<td><a href="{link}">{duration}</a></td>\n'.format(
+                            link=link,
+                            duration=self.q(run['durations'][name])))
+                f.write('</tr>\n')
+
+            f.write('</table>\n')
+            f.write('</body>\n')
+
+            f.write('</html>\n')
+
+    def find_benchmark_names(self, objs):
+        return list(sorted(set(o['name'] for o in objs)))
+
+    def create_table_of_benchmark_runs(self, names, objs):
+
+        def make_key(obj):
+            return (obj['date'], obj['commit_id'])
+
+        def total(obj):
+            return sum(step['duration'] for step in obj['steps'])
+
+        sorted_objs = []
+        for obj in objs:
+            sorted_objs.append((make_key(obj), obj))
+        sorted_objs.sort()
+
+        runs = []
+        for key, obj in sorted_objs:
+            if not runs or make_key(runs[-1]) != key:
+                runs.append({
+                    'date': obj['date'],
+                    'commit_id': obj['commit_id'],
+                    'durations': { obj['name']: total(obj) }
+                })
+            else:
+                runs[-1]['durations'][obj['name']] = total(obj)
+
+        return runs
 
 
 class BenchmarkResult(object):
@@ -152,7 +287,13 @@ class BenchmarkResult(object):
 
     def collect_info_from_checkout(self, checkout):
         output = cliapp.runcmd(['git', 'rev-parse', 'HEAD'], cwd=checkout)
-        self._dict['commit_id'] = output.strip()
+        self._dict['commit_id'] = output.strip()[:7]
+
+        output = cliapp.runcmd(['git', 'show', 'HEAD'], cwd=checkout)
+        for line in output.splitlines():
+            if line.startswith('Date:'):
+                self._dict['date'] = line[len('Date:')].strip()
+                break
 
     def add_step(self, step_info):
         self._dict['steps'] = self._dict.get('steps', []) + [step_info]
