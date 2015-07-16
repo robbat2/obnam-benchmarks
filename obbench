@@ -252,8 +252,9 @@ class ObnamBenchmarker(cliapp.Application):
 
             f.write('<body>\n')
             f.write('<h1>Obnam benchmark: summary</h1>\n')
-            f.write('<table>\n')
 
+            f.write('<h2>Benchmark results</h2>\n')
+            f.write('<table>\n')
             f.write('<tr>\n')
             f.write('<th>date</th>\n')
             f.write('<th>commit</th>\n')
@@ -280,8 +281,15 @@ class ObnamBenchmarker(cliapp.Application):
                 f.write('</tr>\n')
 
             f.write('</table>\n')
-            f.write('</body>\n')
 
+            f.write('<h2>Benchmark spec</h2>\n')
+            f.write('<p><pre>')
+            f.write(
+                self.q(
+                    yaml.safe_dump(spec, default_flow_style=False, indent=4)))
+            f.write('</pre></p>\n')
+
+            f.write('</body>\n')
             f.write('</html>\n')
 
     def find_benchmark_names(self, objs):
