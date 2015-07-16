@@ -56,7 +56,7 @@ class ObnamBenchmarker(cliapp.Application):
         checkout = self.get_treeish(spec, treeish, tempdir)
         self.prepare_obnam(checkout)
         for benchmark in spec.get('benchmarks', []):
-            result = self.run_one_benchmark(benchmark, tempdir, checkout)
+            result = self.run_one_benchmark(spec, benchmark, tempdir, checkout)
             self.save_result(spec, benchmark, result)
 
     def get_treeish(self, spec, treeish, tempdir):
@@ -70,14 +70,14 @@ class ObnamBenchmarker(cliapp.Application):
     def prepare_obnam(self, checkout):
         cliapp.runcmd(['python', 'setup.py', 'build_ext', '-i'], cwd=checkout)
 
-    def run_one_benchmark(self, benchmark, tempdir, checkout):
+    def run_one_benchmark(self, spec, benchmark, tempdir, checkout):
         self.logger.msg('Running benchmark %s' % benchmark['name'])
         with self.logger:
             result = BenchmarkResult()
             result.collect_info_from_spec(benchmark)
             result.collect_info_from_checkout(checkout)
 
-            config = self.create_obnam_config(benchmark, tempdir)
+            config = self.create_obnam_config(spec, benchmark, tempdir)
 
             live = self.create_live_dir(tempdir)
             for step in benchmark.get('steps', []):
@@ -85,13 +85,15 @@ class ObnamBenchmarker(cliapp.Application):
                     step, tempdir, checkout, config, live, result)
             return result
 
-    def create_obnam_config(self, spec, tempdir):
+    def create_obnam_config(self, spec, benchmark, tempdir):
         config = os.path.join(tempdir, 'obnam.conf')
         with open(config, 'w') as f:
             f.write('[config]\n')
             f.write('repository = %s\n' % os.path.join(tempdir, 'repo'))
             f.write('root = %s\n' % self.get_live_data(tempdir))
             for key, value in spec.get('obnam_config', {}).items():
+                f.write('%s = %s\n' % (key, value))
+            for key, value in benchmark.get('obnam_config', {}).items():
                 f.write('%s = %s\n' % (key, value))
         return config
 
