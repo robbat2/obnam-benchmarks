@@ -305,10 +305,13 @@ class BenchmarkResult(object):
         output = cliapp.runcmd(['git', 'rev-parse', 'HEAD'], cwd=checkout)
         self._dict['commit_id'] = output.strip()[:7]
 
-        output = cliapp.runcmd(['git', 'show', 'HEAD'], cwd=checkout)
+        self._dict['date'] = 'unknown'
+        output = cliapp.runcmd(
+            ['git', 'show', '--date=iso', 'HEAD'],
+            cwd=checkout)
         for line in output.splitlines():
             if line.startswith('Date:'):
-                self._dict['date'] = line[len('Date:')].strip()
+                self._dict['date'] = line[len('Date:'):].strip()
                 break
 
     def add_step(self, step_info):
