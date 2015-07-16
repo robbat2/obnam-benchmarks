@@ -122,26 +122,32 @@ class ObnamBenchmarker(cliapp.Application):
             'restore': self.run_restore,
         }
         started = time.time()
-        funcs[action](tempdir, checkout, config)
+        funcs[action](tempdir, checkout, config, step_info)
         ended = time.time()
         step_info['duration'] = ended - started
 
         result.add_step(step_info)
 
-    def run_backup(self, tempdir, checkout, config):
-        self.run_obnam(checkout, ['backup', '--config', config])
+    def run_backup(self, tempdir, checkout, config, step_info):
+        self.run_obnam(step_info, checkout, ['backup', '--config', config])
 
-    def run_restore(self, tempdir, checkout, config):
+    def run_restore(self, tempdir, checkout, config, step_info):
         restored = os.path.join(tempdir, 'restored')
         if os.path.exists(restored):
             shutil.rmtree(restored)
         self.run_obnam(
-            checkout,
+            step_info, checkout,
             ['restore', '--config', config, '--to', restored])
 
-    def run_obnam(self, checkout, args):
+    def run_obnam(self, step_info, checkout, args):
+        env = dict(os.environ)
+        env['OBNAM_PROFILE'] = 'obnam.prof'
         cliapp.runcmd(
             ['./obnam', '--no-default-config'] + args,
+            env=env,
+            cwd=checkout)
+        step_info['profile'] = cliapp.runcmd(
+            ['./obnam-viewprof', 'obnam.prof'],
             cwd=checkout)
 
     def save_result(self, spec, benchmark, result):
@@ -202,15 +208,24 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('</tr>\n')
 
             f.write('<tr>\n')
-            for step in steps:
+            for index, step in enumerate(steps):
+                basename = '{commit}_{name}_{index}.txt'.format(
+                    commit=obj['commit_id'],
+                    name=obj['name'],
+                    index=index)
+
+                profile_filename = os.path.join(spec['html_dir'], basename)
+                with open(profile_filename, 'w') as profile:
+                    profile.write(step['profile'])
+
                 f.write(
-                    '<td>{duration}</td>\n'.format(
+                    '<td><a href="{link}">{duration}</a></td>\n'.format(
+                        link=self.q(basename),
                         duration=self.q('%.1f' % step['duration'])))
             f.write('</tr>\n')
 
             f.write('</table>\n')
             f.write('</body>\n')
-
             f.write('</html>\n')
 
     def q(self, text):
