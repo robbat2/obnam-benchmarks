@@ -258,6 +258,7 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('<tr>\n')
             f.write('<th>date</th>\n')
             f.write('<th>commit</th>\n')
+            f.write('<th>commit msg</th>\n')
             for name in benchmark_names:
                 f.write('<th>{name}</th>\n'.format(name=self.q(name)))
             f.write('</tr>\n')
@@ -268,6 +269,8 @@ class ObnamBenchmarker(cliapp.Application):
                 f.write(
                     '<td>{commit}</td>\n'.format(
                         commit=self.q(run['commit_id'])))
+                f.write('<td>{msg}</td>\n'.format(
+                    msg=self.q(run['commit_msg'])))
 
                 for name in benchmark_names:
                     link = '{commit}_{name}.html'.format(
@@ -314,6 +317,7 @@ class ObnamBenchmarker(cliapp.Application):
                 runs.append({
                     'date': obj['date'],
                     'commit_id': obj['commit_id'],
+                    'commit_msg': obj['commit_msg'],
                     'durations': { obj['name']: total(obj) }
                 })
             else:
@@ -338,9 +342,15 @@ class BenchmarkResult(object):
         self._dict['name'] = spec['name']
 
     def collect_info_from_checkout(self, checkout):
+        self.collect_checkout_commit_id(checkout)
+        self.collect_checkout_commit_date(checkout)
+        self.collect_checkout_commit_first_line(checkout)
+
+    def collect_checkout_commit_id(self, checkout):
         output = cliapp.runcmd(['git', 'rev-parse', 'HEAD'], cwd=checkout)
         self._dict['commit_id'] = output.strip()[:7]
 
+    def collect_checkout_commit_date(self, checkout):
         self._dict['date'] = 'unknown'
         output = cliapp.runcmd(
             ['git', 'show', '--date=iso', 'HEAD'],
@@ -349,6 +359,14 @@ class BenchmarkResult(object):
             if line.startswith('Date:'):
                 self._dict['date'] = line[len('Date:'):].strip()
                 break
+
+    def collect_checkout_commit_first_line(self, checkout):
+        self._dict['date'] = 'unknown'
+        output = cliapp.runcmd(
+            ['git', 'show', '--pretty=oneline', 'HEAD'],
+            cwd=checkout)
+        line1 = output.splitlines()[0].split(' ', 1)[1]
+        self._dict['commit_msg'] = line1
 
     def add_step(self, step_info):
         self._dict['steps'] = self._dict.get('steps', []) + [step_info]
