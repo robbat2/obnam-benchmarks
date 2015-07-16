@@ -20,6 +20,7 @@
 import os
 import shutil
 import tempfile
+import time
 
 import cliapp
 import yaml
@@ -65,7 +66,11 @@ class ObnamBenchmarker(cliapp.Application):
 
     def run_benchmark_step(self, step, checkout, result):
         step_info = dict(step)
-        step_info['duration'] = 0.0
+        if 'live' in step:
+            cliapp.runcmd(['sh', '-euc', step['live']], cwd=checkout)
+        started = time.time()
+        ended = time.time()
+        step_info['duration'] = ended - started
         result.add_step(step_info)
 
     def save_result(self, spec, result):
