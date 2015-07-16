@@ -361,7 +361,6 @@ class BenchmarkResult(object):
                 break
 
     def collect_checkout_commit_first_line(self, checkout):
-        self._dict['date'] = 'unknown'
         output = cliapp.runcmd(
             ['git', 'show', '--pretty=oneline', 'HEAD'],
             cwd=checkout)
