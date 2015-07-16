@@ -1,0 +1,106 @@
+#!/usr/bin/python
+# Copyright 2015  Lars Wirzenius
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# =*= License: GPL-3+ =*=
+
+
+import os
+import shutil
+import tempfile
+
+import cliapp
+import yaml
+
+
+class ObnamBenchmarker(cliapp.Application):
+
+    def process_args(self, args):
+        if not args:
+            raise cliapp.AppException('Need benchmark spec filename')
+        spec = self.read_benchmark_spec(args[0])
+        for treeish in args[1:]:
+            self.run_all_benchmarks(spec, treeish)
+        self.generate_html(spec)
+
+    def read_benchmark_spec(self, filename):
+        with open(filename) as f:
+            return yaml.safe_load(f)
+
+    def run_all_benchmarks(self, spec, treeish):
+        checkout = self.get_treeish(spec, treeish)
+        for benchmark in spec.get('benchmarks', []):
+            result = self.run_one_benchmark(benchmark, checkout)
+            self.save_result(spec, result)
+        shutil.rmtree(checkout)
+
+    def get_treeish(self, spec, treeish):
+        tempdir = tempfile.mkdtemp()
+        cliapp.runcmd(['git', 'clone', spec['git'], tempdir])
+        cliapp.runcmd(['git', 'checkout', treeish], cwd=tempdir)
+        return tempdir
+
+    def run_one_benchmark(self, benchmark, checkout):
+        result = BenchmarkResult()
+        result.collect_info_from_spec(benchmark)
+        result.collect_info_from_checkout(checkout)
+        for step in benchmark.get('steps', []):
+            self.run_benchmark_step(step, checkout, result)
+        return result
+
+    def run_benchmark_step(self, step, checkout, result):
+        step_info = dict(step)
+        step_info['duration'] = 0.0
+        result.add_step(step_info)
+
+    def save_result(self, spec, result):
+        obj = result.as_dict()
+        pathname = self.get_report_pathname(spec, result)
+        with open(pathname, 'w') as f:
+            yaml.safe_dump(obj, stream=f, default_flow_style=False, indent=4)
+
+    def get_report_pathname(self, spec, result):
+        return os.path.join(
+            spec['reports-dir'],
+            result.get_commit_id() + '.yaml')
+
+    def generate_html(self, spec):
+        pass
+
+
+class BenchmarkResult(object):
+
+    def __init__(self):
+        self._dict = {}
+
+    def as_dict(self):
+        return self._dict
+
+    def collect_info_from_spec(self, spec):
+        self._dict['name'] = spec['name']
+
+    def collect_info_from_checkout(self, checkout):
+        output = cliapp.runcmd(['git', 'rev-parse', 'HEAD'], cwd=checkout)
+        self._dict['commit_id'] = output.strip()
+
+    def add_step(self, step_info):
+        self._dict['steps'] = self._dict.get('steps', []) + [step_info]
+
+    def get_commit_id(self):
+        return self._dict['commit_id']
+
+
+if __name__ == '__main__':
+    ObnamBenchmarker().run()
