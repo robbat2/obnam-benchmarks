@@ -183,7 +183,7 @@ class ObnamBenchmarker(cliapp.Application):
             for step in steps:
                 f.write(
                     '<td>{duration}</td>\n'.format(
-                        duration=self.q(step['duration'])))
+                        duration=self.q('%.1f' % step['duration'])))
             f.write('</tr>\n')
 
             f.write('</table>\n')
@@ -233,10 +233,11 @@ class ObnamBenchmarker(cliapp.Application):
                     link = '{commit}_{name}.html'.format(
                         commit=self.q(run['commit_id']),
                         name=self.q(name))
+                    duration = '%.1f' % run['durations'][name]
                     f.write(
                         '<td><a href="{link}">{duration}</a></td>\n'.format(
                             link=link,
-                            duration=self.q(run['durations'][name])))
+                            duration=self.q(duration)))
                 f.write('</tr>\n')
 
             f.write('</table>\n')
