@@ -47,7 +47,7 @@ class ObnamBenchmarker(cliapp.Application):
         self.prepare_obnam(checkout)
         for benchmark in spec.get('benchmarks', []):
             result = self.run_one_benchmark(benchmark, tempdir, checkout)
-            self.save_result(spec, result)
+            self.save_result(spec, benchmark, result)
 
     def get_treeish(self, spec, treeish, tempdir):
         checkout = os.path.join(tempdir, 'git')
@@ -124,16 +124,16 @@ class ObnamBenchmarker(cliapp.Application):
             ['./obnam', '--no-default-config'] + args,
             cwd=checkout)
 
-    def save_result(self, spec, result):
+    def save_result(self, spec, benchmark, result):
         obj = result.as_dict()
-        pathname = self.get_report_pathname(spec, result)
+        pathname = self.get_report_pathname(spec, benchmark, result)
         with open(pathname, 'w') as f:
             yaml.safe_dump(obj, stream=f, default_flow_style=False, indent=4)
 
-    def get_report_pathname(self, spec, result):
+    def get_report_pathname(self, spec, benchmark, result):
         return os.path.join(
             spec['reports-dir'],
-            result.get_commit_id() + '.yaml')
+            '%s_%s.yaml' % (result.get_commit_id(), benchmark['name']))
 
     def generate_html(self, spec):
         pass
