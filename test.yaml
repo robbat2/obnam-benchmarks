@@ -1,0 +1,20 @@
+git: /home/liw/obnam/obnam
+obnam_config:
+  repository-format: green-albatross
+benchmarks:
+  - name: empty_dir
+    description: backup an empty directory
+    steps:
+      - live: exit 0
+        obnam: backup
+      - obnam: restore
+  - name: many_files
+    description: backup many small files
+    steps:
+      - live: genbackupdata . --create=10 --file-size=1
+        obnam: backup
+      - obnam: restore
+      - obnam: backup
+reports_dir: /home/liw/obnam/benchmarks/reports
+html_dir: /home/liw/obnam/benchmarks/html
+state: /home/liw/obnam/benchmarks/state.yaml
