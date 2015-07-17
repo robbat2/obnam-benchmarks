@@ -190,6 +190,7 @@ class ObnamBenchmarker(cliapp.Application):
             self.write_benchmark_page(spec, obj)
         self.write_summary_page(spec, objs)
         self.copy_css_file(spec)
+        self.publish_html(spec)
 
     def read_results_files(self, spec):
         objs = []
@@ -354,6 +355,13 @@ class ObnamBenchmarker(cliapp.Application):
     def copy_css_file(self, spec):
         filename = os.path.join(spec['html_dir'], 'benchmark.css')
         shutil.copy('benchmark.css', filename)
+
+    def publish_html(self, spec):
+        if 'publish_html' in spec:
+            self.logger.msg('Publishing HTML')
+            cliapp.runcmd(
+                ['sh', '-euc', spec['publish_html']],
+                cwd=spec['html_dir'])
 
 
 class BenchmarkResult(object):

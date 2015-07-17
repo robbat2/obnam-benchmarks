@@ -18,3 +18,5 @@ benchmarks:
       - obnam: restore
 reports_dir: /home/liw/benchmark/reports
 html_dir: /home/liw/benchmark/html
+publish_html: |
+  rsync -ahHSs --delete-after "$HOME/benchmark/." obbench@pieni.net:benchmark/.
