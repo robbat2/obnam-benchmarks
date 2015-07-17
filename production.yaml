@@ -1,0 +1,20 @@
+state: /home/liw/benchmark/state.yaml
+git: /home/liw/obnam/obnam
+obnam_config:
+  repository-format: green-albatross
+benchmarks:
+  - name: many_files
+    description: backup many small files
+    steps:
+      - live: genbackupdata . --create=100Ki --file-size=1 --quiet
+        obnam: backup
+      - obnam: restore
+      - obnam: backup
+  - name: one_big_file
+    description: backup one big file
+    steps:
+      - live: genbackupdata . --create=1G --file-size=999999T
+        obnam: backup
+      - obnam: restore
+reports_dir: /home/liw/benchmark/reports
+html_dir: /home/liw/benchmark/html
