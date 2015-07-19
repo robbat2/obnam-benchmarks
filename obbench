@@ -114,6 +114,7 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('[config]\n')
             f.write('repository = %s\n' % os.path.join(tempdir, 'repo'))
             f.write('root = %s\n' % self.get_live_data(tempdir))
+            f.write('log = %s\n' % os.path.join(tempdir, 'obnam.log'))
             for key, value in spec.get('obnam_config', {}).items():
                 f.write('%s = %s\n' % (key, value))
             for key, value in benchmark.get('obnam_config', {}).items():
