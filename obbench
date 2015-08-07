@@ -233,7 +233,7 @@ class ObnamBenchmarker(cliapp.Application):
             for step in obj['steps']:
                 if 'obnam' in step:
                     f.write(
-                        '<th>{action} (ref)</th>\n'.format(
+                        '<th>{action} (% of ref)</th>\n'.format(
                             action=self.q(step['obnam'])))
             f.write('</tr>\n')
 
@@ -255,7 +255,8 @@ class ObnamBenchmarker(cliapp.Application):
                 if benchmark is not None:
                     spec_step = benchmark['steps'][index]
                     if 'reference' in spec_step:
-                        reference = '%.0f' % spec_step['reference']
+                        reference = '%.1f %%' % (
+                            100.0 * step['duration'] / spec_step['reference'])
 
                 f.write(
                     '<td><a href="{link}">{duration}</a> '
@@ -301,7 +302,7 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('<th>commit</th>\n')
             f.write('<th>commit msg</th>\n')
             for name in benchmark_names:
-                f.write('<th>{name} (ref)</th>\n'.format(name=self.q(name)))
+                f.write('<th>{name} (% of ref)</th>\n'.format(name=self.q(name)))
             f.write('</tr>\n')
 
             for run in runs:
@@ -325,6 +326,11 @@ class ObnamBenchmarker(cliapp.Application):
                         sum(x.get('reference', 0) for x in b['steps'])
                         for b in spec['benchmarks']
                         if b['name'] == name)
+                    if reference > 0:
+                        reference = '%.1f %%' % (
+                            100.0 * run['durations'][name])
+                    else:
+                        reference = 'unknown'
 
                     f.write(
                         '<td class="duration">'
