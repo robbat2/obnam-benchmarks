@@ -225,7 +225,7 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('<table>\n')
 
             f.write('<tr>\n')
-            for step in objs['steps']:
+            for step in obj['steps']:
                 if 'obnam' in step:
                     f.write(
                         '<th>{action} (ref)</th>\n'.format(
