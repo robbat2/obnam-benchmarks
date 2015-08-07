@@ -288,7 +288,7 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('<th>commit</th>\n')
             f.write('<th>commit msg</th>\n')
             for name in benchmark_names:
-                f.write('<th>{name}</th>\n'.format(name=self.q(name)))
+                f.write('<th>{name} (ref)</th>\n'.format(name=self.q(name)))
             f.write('</tr>\n')
 
             for run in runs:
@@ -307,11 +307,14 @@ class ObnamBenchmarker(cliapp.Application):
                         commit=self.q(run['commit_id']),
                         name=self.q(name))
                     duration = '%.1f' % run['durations'][name]
+                    reference = '%.0f' % run['references'][name]
                     f.write(
                         '<td class="duration">'
-                        '<a href="{link}">{duration}</a></td>\n'.format(
+                        '<a href="{link}">{duration}</a> '
+                        '({reference})</td>\n'.format(
                             link=link,
-                            duration=self.q(duration)))
+                            duration=self.q(duration),
+                            reference=reference))
                 f.write('</tr>\n')
 
             f.write('</table>\n')
@@ -334,8 +337,8 @@ class ObnamBenchmarker(cliapp.Application):
         def make_key(obj):
             return (obj['date'], obj['commit_id'])
 
-        def total(obj):
-            return sum(step['duration'] for step in obj['steps'])
+        def total(obj, field):
+            return sum(step[field] for step in obj['steps'])
 
         sorted_objs = []
         for obj in objs:
@@ -349,10 +352,12 @@ class ObnamBenchmarker(cliapp.Application):
                     'date': obj['date'],
                     'commit_id': obj['commit_id'],
                     'commit_msg': obj['commit_msg'],
-                    'durations': { obj['name']: total(obj) }
+                    'durations': { obj['name']: total(obj, 'duration') },
+                    'references': { obj['name']: total(obj, 'reference') },
                 })
             else:
-                runs[-1]['durations'][obj['name']] = total(obj)
+                runs[-1]['durations'][obj['name']] = total(obj, 'duration')
+                runs[-1]['references'][obj['name']] = total(obj, 'reference')
 
         return runs
 
