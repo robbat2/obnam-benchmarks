@@ -7,13 +7,17 @@ benchmarks:
     steps:
       - live: exit 0
         obnam: backup
+        reference: 42
       - obnam: restore
+        reference: 42
   - name: many_files
     description: backup many small files
     steps:
       - live: genbackupdata . --create=10 --file-size=1
         obnam: backup
+        reference: 42
       - obnam: restore
+        reference: 42
       - obnam: backup
 reports_dir: /home/liw/obnam/benchmarks/test.dir/reports
 html_dir: /home/liw/obnam/benchmarks/test.dir/html

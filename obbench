@@ -149,6 +149,7 @@ class ObnamBenchmarker(cliapp.Application):
         funcs[action](tempdir, checkout, config, step_info)
         ended = time.time()
         step_info['duration'] = ended - started
+        step_info['reference'] = step.get('reference', 0)
 
         result.add_step(step_info)
 
@@ -228,7 +229,7 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('<tr>\n')
             for step in steps:
                 f.write(
-                    '<th>{action}</th>\n'.format(
+                    '<th>{action} (ref)</th>\n'.format(
                         action=self.q(step['obnam'])))
             f.write('</tr>\n')
 
@@ -244,9 +245,11 @@ class ObnamBenchmarker(cliapp.Application):
                     profile.write(step['profile'])
 
                 f.write(
-                    '<td><a href="{link}">{duration}</a></td>\n'.format(
+                    '<td><a href="{link}">{duration}</a> '
+                    '({ref})</td>\n'.format(
                         link=self.q(basename),
-                        duration=self.q('%.1f' % step['duration'])))
+                        duration=self.q('%.1f' % step['duration']),
+                        ref=step['reference']))
             f.write('</tr>\n')
 
             f.write('</table>\n')
