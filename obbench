@@ -328,7 +328,7 @@ class ObnamBenchmarker(cliapp.Application):
                         if b['name'] == name)
                     if reference > 0:
                         reference = '%.1f %%' % (
-                            100.0 * run['durations'][name])
+                            100.0 * run['durations'][name] / reference)
                     else:
                         reference = 'unknown'
 
