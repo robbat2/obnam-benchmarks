@@ -249,7 +249,7 @@ class ObnamBenchmarker(cliapp.Application):
                     '({ref})</td>\n'.format(
                         link=self.q(basename),
                         duration=self.q('%.1f' % step['duration']),
-                        ref=step['reference']))
+                        ref=step.get('reference', 0)))
             f.write('</tr>\n')
 
             f.write('</table>\n')
@@ -338,7 +338,7 @@ class ObnamBenchmarker(cliapp.Application):
             return (obj['date'], obj['commit_id'])
 
         def total(obj, field):
-            return sum(step[field] for step in obj['steps'])
+            return sum(step.get(field, 0) for step in obj['steps'])
 
         sorted_objs = []
         for obj in objs:
