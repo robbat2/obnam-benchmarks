@@ -202,8 +202,6 @@ class ObnamBenchmarker(cliapp.Application):
         return objs
 
     def write_benchmark_page(self, spec, obj):
-        steps = [s for s in obj['steps'] if 'obnam' in s]
-
         filename = os.path.join(
             spec['html_dir'],
             '{}_{}.html'.format(obj['commit_id'], obj['name']))
@@ -227,14 +225,18 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('<table>\n')
 
             f.write('<tr>\n')
-            for step in steps:
-                f.write(
-                    '<th>{action} (ref)</th>\n'.format(
-                        action=self.q(step['obnam'])))
+            for step in objs['steps']:
+                if 'obnam' in step:
+                    f.write(
+                        '<th>{action} (ref)</th>\n'.format(
+                            action=self.q(step['obnam'])))
             f.write('</tr>\n')
 
             f.write('<tr>\n')
-            for index, step in enumerate(steps):
+            for index, step in enumerate(objs['steps']):
+                if 'obnam' not in step:
+                    continue
+
                 basename = '{commit}_{name}_{index}.txt'.format(
                     commit=obj['commit_id'],
                     name=obj['name'],
@@ -244,12 +246,13 @@ class ObnamBenchmarker(cliapp.Application):
                 with open(profile_filename, 'w') as profile:
                     profile.write(step['profile'])
 
+                spec_step = spec['steps'][index]
                 f.write(
                     '<td><a href="{link}">{duration}</a> '
                     '({ref})</td>\n'.format(
                         link=self.q(basename),
                         duration=self.q('%.1f' % step['duration']),
-                        ref=step.get('reference', 0)))
+                        ref=spec_step.get('reference', 0)))
             f.write('</tr>\n')
 
             f.write('</table>\n')
