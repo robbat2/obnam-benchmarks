@@ -1,3 +1,6 @@
+description: >-
+  Reference times are against twice the time of rsync on the same data,
+  on the same machine.
 state: /home/liw/benchmark/state.yaml
 git: /home/liw/obnam/obnam
 obnam_config:
