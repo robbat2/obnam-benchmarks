@@ -320,7 +320,12 @@ class ObnamBenchmarker(cliapp.Application):
                         commit=self.q(run['commit_id']),
                         name=self.q(name))
                     duration = '%.1f' % run['durations'][name]
-                    reference = '%.0f' % run['references'][name]
+
+                    reference = sum(
+                        sum(x.get('reference', 0) for x in b['steps'])
+                        for b in spec['benchmarks']
+                        if b['name'] == name)
+
                     f.write(
                         '<td class="duration">'
                         '<a href="{link}">{duration}</a> '
@@ -366,11 +371,9 @@ class ObnamBenchmarker(cliapp.Application):
                     'commit_id': obj['commit_id'],
                     'commit_msg': obj['commit_msg'],
                     'durations': { obj['name']: total(obj, 'duration') },
-                    'references': { obj['name']: total(obj, 'reference') },
                 })
             else:
                 runs[-1]['durations'][obj['name']] = total(obj, 'duration')
-                runs[-1]['references'][obj['name']] = total(obj, 'reference')
 
         return runs
 
