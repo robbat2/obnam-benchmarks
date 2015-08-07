@@ -202,6 +202,12 @@ class ObnamBenchmarker(cliapp.Application):
         return objs
 
     def write_benchmark_page(self, spec, obj):
+        for benchmark in spec['benchmarks']:
+            if benchmark['name'] == obj['name']:
+                break
+        else:
+            benchmark = {}
+
         filename = os.path.join(
             spec['html_dir'],
             '{}_{}.html'.format(obj['commit_id'], obj['name']))
@@ -246,13 +252,18 @@ class ObnamBenchmarker(cliapp.Application):
                 with open(profile_filename, 'w') as profile:
                     profile.write(step['profile'])
 
-                spec_step = spec['steps'][index]
+                reference = 'unknown'
+                if benchmark is not None:
+                    spec_step = benchmark['steps'][index]
+                    if 'reference' in spec_step:
+                        reference = '%.0f' % spec_step['reference']
+
                 f.write(
                     '<td><a href="{link}">{duration}</a> '
                     '({ref})</td>\n'.format(
                         link=self.q(basename),
                         duration=self.q('%.1f' % step['duration']),
-                        ref=spec_step.get('reference', 0)))
+                        ref=reference))
             f.write('</tr>\n')
 
             f.write('</table>\n')
