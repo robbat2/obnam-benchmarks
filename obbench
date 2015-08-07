@@ -233,7 +233,7 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('</tr>\n')
 
             f.write('<tr>\n')
-            for index, step in enumerate(objs['steps']):
+            for index, step in enumerate(obj['steps']):
                 if 'obnam' not in step:
                     continue
 
