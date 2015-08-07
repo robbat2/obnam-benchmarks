@@ -149,7 +149,6 @@ class ObnamBenchmarker(cliapp.Application):
         funcs[action](tempdir, checkout, config, step_info)
         ended = time.time()
         step_info['duration'] = ended - started
-        step_info['reference'] = step.get('reference', 0)
 
         result.add_step(step_info)
 
