@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -eu
+
+rm -rf test.dir
+mkdir test.dir
+mkdir test.dir/html
+mkdir test.dir/reports
+
+./obbench test.yaml master~2 master~1 master

@@ -15,7 +15,7 @@ benchmarks:
         obnam: backup
       - obnam: restore
       - obnam: backup
-reports_dir: /home/liw/obnam/benchmarks/reports
-html_dir: /home/liw/obnam/benchmarks/html
+reports_dir: /home/liw/obnam/benchmarks/test.dir/reports
+html_dir: /home/liw/obnam/benchmarks/test.dir/html
 publish_html: echo PUBLISHING HTML HERE
-state: /home/liw/obnam/benchmarks/state.yaml
+state: /home/liw/obnam/benchmarks/test.dir/state.yaml
