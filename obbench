@@ -112,6 +112,7 @@ class ObnamBenchmarker(cliapp.Application):
         config = os.path.join(tempdir, 'obnam.conf')
         with open(config, 'w') as f:
             f.write('[config]\n')
+            f.write('quiet = yes\n')
             f.write('repository = %s\n' % os.path.join(tempdir, 'repo'))
             f.write('root = %s\n' % self.get_live_data(tempdir))
             f.write('log = %s\n' % os.path.join(tempdir, 'obnam.log'))
