@@ -234,7 +234,7 @@ class ObnamBenchmarker(cliapp.Application):
             for step in obj['steps']:
                 if 'obnam' in step:
                     f.write(
-                        '<th>{action} secs (% of ref)</th>\n'.format(
+                        '<th>{action} seconds<br/>(% of goal)</th>\n'.format(
                             action=self.q(step['obnam'])))
             f.write('</tr>\n')
 
@@ -303,7 +303,8 @@ class ObnamBenchmarker(cliapp.Application):
             f.write('<th>commit</th>\n')
             f.write('<th>commit msg</th>\n')
             for name in benchmark_names:
-                f.write('<th>{name} secs (% of ref)</th>\n'.format(name=self.q(name)))
+                f.write('<th>{name} (seconds)'
+                        '<br/>(% of goal)</th>\n'.format(name=self.q(name)))
             f.write('</tr>\n')
 
             for run in runs:

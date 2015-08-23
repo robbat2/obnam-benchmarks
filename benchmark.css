@@ -1,23 +1,27 @@
 table {
-    border: solid 1px;
+    border: 0;
 }
 th {
     border-bottom: solid 1px;
 }
 th, td {
-    border-right: solid 1px;
     font-family: monospace;
+    text-align: left;
+    vertical-align: top;
+    padding-right: 2em;
+}
+td {
+    padding-bottom: 1em;
 }
 th.duration, td.duration {
-    text-align: right;
+    width: 15em;
 }
 td.date {
-    width: 25em;
+//    min-width: 30em;
 }
 td.commitid {
-    width: 7em;
+//    width: 7em;
 }
 td.commitmsg {
-    width: 30em;
-    text-align: left;
+//    max-width: 30em;
 }
