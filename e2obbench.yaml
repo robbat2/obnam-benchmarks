@@ -1,0 +1,32 @@
+description: >-
+  Benchmarks run on the e2obbench machine, which is a virtual machine
+  on Lars's home server.
+  
+  Reference times are against twice the time of rsync on the same data,
+  on the same machine.
+state: /home/liw/benchmark-state/state.yaml
+git: /home/liw/obnam/obnam
+obnam_config:
+  repository-format: green-albatross
+benchmarks:
+  - name: many_files
+    description: backup many small files
+    steps:
+      - live: genbackupdata . --create=1Ki --file-size=1 --quiet
+        obnam: backup
+        reference: 112
+      - obnam: restore
+        reference: 112
+      - obnam: backup
+  - name: one_big_file
+    description: backup one big file
+    steps:
+      - live: genbackupdata . --create=1M --file-size=999999T
+        obnam: backup
+        reference: 42
+      - obnam: restore
+        reference: 42
+reports_dir: /home/liw/benchmark-state/reports
+html_dir: /home/liw/benchmark-state/html
+publish_html: |
+  echo rsync -ahHSs --delete-after "$HOME/benchmark-state/." obbench@pieni.net:benchmark/.
