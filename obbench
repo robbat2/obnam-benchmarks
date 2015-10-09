@@ -25,7 +25,58 @@ import tempfile
 import time
 
 import cliapp
+import jinja2
 import yaml
+
+
+summary_j2 = '''\
+{% autoescape true %}
+<html>
+    <head>
+        <title>Obnam benchmark: summary</title>
+        <link rel="stylesheet" href="benchmark.css" type="text/css" />
+    </head>
+    <body>
+        <h1>Obnam benchmark: summary</h1>
+
+        <h2>Benchmark results</h2>
+
+        <table>
+            <tr>
+                <th>date</th>
+                <th>commit</th>
+                <th>commit msg</th>
+                {% for name in benchmark_names %}
+                    <th>{{ name }} (seconds) <br/>(% of goal)</th>
+                {% endfor %}
+            </tr>
+
+            {% for run in runs %}
+                <tr>
+                    <td class="date">{{ run.date }}</td>
+                    <td class="commitid">{{ run.commit_id }}</td>
+                    <td class="commitmsg">{{ run.commit_msg }}</td>
+
+                    {% for name in benchmark_names %}
+                        <td class="duration">
+                            <a href="{{ run.links[name] }}">
+                                {{ run.durations[name] }}</a>
+                            ({{ run.references[name] }})
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+
+        </table>
+
+        <h2>Benchmark spec</h2>
+        <p><pre>{{ spec }}</pre></p>
+
+    </body>
+</html>
+
+{% endautoescape %}
+'''
 
 
 class ObnamBenchmarker(cliapp.Application):
@@ -285,45 +336,10 @@ class ObnamBenchmarker(cliapp.Application):
 
         filename = os.path.join(spec['html_dir'], 'index.html')
         with open(filename, 'w') as f:
-            f.write('<html>\n')
-
-            f.write('<head>\n')
-            f.write('<title>Obnam benchmark: summary</title>\n')
-            f.write('<link rel="stylesheet" href="benchmark.css"\n')
-            f.write('      type="text/css" />\n')
-            f.write('</head>\n')
-
-            f.write('<body>\n')
-            f.write('<h1>Obnam benchmark: summary</h1>\n')
-
-            f.write('<h2>Benchmark results</h2>\n')
-            f.write('<table>\n')
-            f.write('<tr>\n')
-            f.write('<th>date</th>\n')
-            f.write('<th>commit</th>\n')
-            f.write('<th>commit msg</th>\n')
-            for name in benchmark_names:
-                f.write('<th>{name} (seconds)'
-                        '<br/>(% of goal)</th>\n'.format(name=self.q(name)))
-            f.write('</tr>\n')
-
             for run in runs:
-                f.write('<tr>\n')
-                f.write(
-                    '<td class="date">{date}</td>\n'.format(
-                        date=self.q(run['date'])))
-                f.write(
-                    '<td class="commitid">{commit}</td>\n'.format(
-                        commit=self.q(run['commit_id'])))
-                f.write('<td class="commitmsg">{msg}</td>\n'.format(
-                    msg=self.q(run['commit_msg'])))
-
+                run['links'] = {}
+                run['references'] = {}
                 for name in benchmark_names:
-                    link = '{commit}_{name}.html'.format(
-                        commit=self.q(run['commit_id']),
-                        name=self.q(name))
-                    duration = '%.1f' % run['durations'][name]
-
                     reference = sum(
                         sum(x.get('reference', 0) for x in b['steps'])
                         for b in spec['benchmarks']
@@ -333,27 +349,26 @@ class ObnamBenchmarker(cliapp.Application):
                             100.0 * run['durations'][name] / reference)
                     else:
                         reference = 'unknown'
+                    run['references'][name] = reference
 
-                    f.write(
-                        '<td class="duration">'
-                        '<a href="{link}">{duration}</a> '
-                        '({reference})</td>\n'.format(
-                            link=link,
-                            duration=self.q(duration),
-                            reference=reference))
-                f.write('</tr>\n')
+                    run['links'][name] = '{commit}_{name}.html'.format(
+                        commit=self.q(run['commit_id']),
+                        name=self.q(name))
+                    run['durations'][name] = '%.1f' % run['durations'][name]
 
-            f.write('</table>\n')
+            vars = {
+                'benchmark_names': benchmark_names,
+                'runs': runs,
+                'spec': yaml.safe_dump(
+                    spec, default_flow_style=False, indent=4),
+            }
 
-            f.write('<h2>Benchmark spec</h2>\n')
-            f.write('<p><pre>')
-            f.write(
-                self.q(
-                    yaml.safe_dump(spec, default_flow_style=False, indent=4)))
-            f.write('</pre></p>\n')
+            env = jinja2.Environment(
+                autoescape=lambda foo: True,
+                extensions=['jinja2.ext.autoescape'])
+            template = env.from_string(summary_j2)
+            f.write(template.render(**vars))
 
-            f.write('</body>\n')
-            f.write('</html>\n')
 
     def find_benchmark_names(self, objs):
         return list(sorted(set(o['name'] for o in objs)))
