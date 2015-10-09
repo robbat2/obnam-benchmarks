@@ -29,4 +29,5 @@ benchmarks:
 reports_dir: /home/liw/benchmark-state/reports
 html_dir: /home/liw/benchmark-state/html
 publish_html: |
-  echo rsync -ahHSs --delete-after "$HOME/benchmark-state/." obbench@pieni.net:benchmark/.
+  rsync -ahHSs --delete-after "$HOME/benchmark-state/." \
+    obbench@pieni.net:benchmark/.
