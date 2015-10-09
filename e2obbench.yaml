@@ -14,18 +14,18 @@ benchmarks:
     steps:
       - live: genbackupdata . --create=100Ki --file-size=1 --quiet
         obnam: backup
-        reference: 112
+        reference: 9
       - obnam: restore
-        reference: 112
+        reference: 9
       - obnam: backup
   - name: one_big_file
     description: backup one big file
     steps:
       - live: genbackupdata . --create=1G --file-size=999999T
         obnam: backup
-        reference: 42
+        reference: 7
       - obnam: restore
-        reference: 42
+        reference: 7
 reports_dir: /home/liw/benchmark-state/reports
 html_dir: /home/liw/benchmark-state/html
 publish_html: |
