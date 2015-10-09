@@ -12,7 +12,7 @@ benchmarks:
   - name: many_files
     description: backup many small files
     steps:
-      - live: genbackupdata . --create=1Ki --file-size=1 --quiet
+      - live: genbackupdata . --create=100Ki --file-size=1 --quiet
         obnam: backup
         reference: 112
       - obnam: restore
@@ -21,7 +21,7 @@ benchmarks:
   - name: one_big_file
     description: backup one big file
     steps:
-      - live: genbackupdata . --create=1M --file-size=999999T
+      - live: genbackupdata . --create=1G --file-size=999999T
         obnam: backup
         reference: 42
       - obnam: restore
