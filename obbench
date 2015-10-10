@@ -79,6 +79,41 @@ summary_j2 = '''\
 '''
 
 
+benchmark_j2 = '''\
+{% autoescape true %}
+<html>
+    <head>
+        <title>Obnam benchmark: {{ obj.commit_id }} {{ obj.name }}</title>
+        <link rel="stylesheet" href="benchmark.css" type="text/css" />
+    </head>
+    <body>
+
+        <h1>Obnam benchmark: {{ obj.commit_id }} {{ obj.name }}</h1>
+
+        <table>
+            <tr>
+                {% for step in obj.steps %}
+                    {% if 'obnam' in step %}
+                        <th>{{ step.obnam }} seconds<br/> (% of goal)</th>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+
+            <tr>
+                {% for step in obj.steps %}
+                    {% if 'obnam' in step %}
+                        <td><a href="{{ step.profile_filename }}">
+                            {{ step.duration_fmt }}</a> ({{step.reference_fmt }})</td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        </table>
+    </body>
+</html>
+{% endautoescape %}
+'''
+
+
 class ObnamBenchmarker(cliapp.Application):
 
     def process_args(self, args):
@@ -263,33 +298,6 @@ class ObnamBenchmarker(cliapp.Application):
             spec['html_dir'],
             '{}_{}.html'.format(obj['commit_id'], obj['name']))
         with open(filename, 'w') as f:
-            f.write('<html>\n')
-
-            f.write('<head>\n')
-            f.write(
-                '<title>Obnam benchmark: {commit} {name}</title>\n'.format(
-                    commit=self.q(obj['commit_id']),
-                    name=self.q(obj['name'])))
-            f.write('<link rel="stylesheet" href="benchmark.css"\n')
-            f.write('      type="text/css" />\n')
-            f.write('</head>\n')
-
-            f.write('<body>\n')
-            f.write(
-                '<h1>Obnam benchmark: {commit} {name}</h1>\n'.format(
-                    commit=self.q(obj['commit_id']),
-                    name=self.q(obj['name'])))
-            f.write('<table>\n')
-
-            f.write('<tr>\n')
-            for step in obj['steps']:
-                if 'obnam' in step:
-                    f.write(
-                        '<th>{action} seconds<br/>(% of goal)</th>\n'.format(
-                            action=self.q(step['obnam'])))
-            f.write('</tr>\n')
-
-            f.write('<tr>\n')
             for index, step in enumerate(obj['steps']):
                 if 'obnam' not in step:
                     continue
@@ -299,8 +307,9 @@ class ObnamBenchmarker(cliapp.Application):
                     name=obj['name'],
                     index=index)
 
-                profile_filename = os.path.join(spec['html_dir'], basename)
-                with open(profile_filename, 'w') as profile:
+                step['profile_filename'] = os.path.join(
+                    spec['html_dir'], basename)
+                with open(step['profile_filename'], 'w') as profile:
                     profile.write(step['profile'])
 
                 reference = 'unknown'
@@ -309,18 +318,19 @@ class ObnamBenchmarker(cliapp.Application):
                     if 'reference' in spec_step:
                         reference = '%.1f %%' % (
                             100.0 * step['duration'] / spec_step['reference'])
+                step['reference_fmt'] = reference
 
-                f.write(
-                    '<td><a href="{link}">{duration}</a> '
-                    '({ref})</td>\n'.format(
-                        link=self.q(basename),
-                        duration=self.q('%.1f' % step['duration']),
-                        ref=reference))
-            f.write('</tr>\n')
+                step['duration_fmt'] = '%.1f' % step['duration']
 
-            f.write('</table>\n')
-            f.write('</body>\n')
-            f.write('</html>\n')
+            vars = {
+                'obj': obj,
+            }
+
+            env = jinja2.Environment(
+                autoescape=lambda foo: True,
+                extensions=['jinja2.ext.autoescape'])
+            template = env.from_string(benchmark_j2)
+            f.write(template.render(**vars))
 
     def q(self, text):
         '''Quote for HTML'''
