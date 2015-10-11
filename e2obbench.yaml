@@ -1,6 +1,7 @@
 description: >-
   Benchmarks run on the e2obbench machine, which is a virtual machine
-  on Lars's home server.
+  on Lars's home server (1 virtual CPU, 4 GiB RAM, disk space for
+  benchmarks via virtio and spinning drives on the host).
   
   Reference times are against twice the time of rsync on the same data,
   on the same machine.
