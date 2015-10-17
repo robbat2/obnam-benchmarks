@@ -307,10 +307,10 @@ class ObnamBenchmarker(cliapp.Application):
                     name=obj['name'],
                     index=index)
 
-                step['profile_filename'] = os.path.join(
-                    spec['html_dir'], basename)
-                with open(step['profile_filename'], 'w') as profile:
+                filename = os.path.join(spec['html_dir'], basename)
+                with open(filename, 'w') as profile:
                     profile.write(step['profile'])
+                step['profile_filename'] = basename
 
                 reference = 'unknown'
                 if benchmark is not None:
