@@ -1,0 +1,37 @@
+description: >-
+  Benchmarks run on the e2obbench machine, which is a virtual machine
+  on Lars's home server (1 virtual CPU, 4 GiB RAM, disk space for
+  benchmarks via virtio and spinning drives on the host).
+  
+  Reference times are against twice the time of rsync on the same data,
+  on the same machine.
+
+  This version is using FORMAT 6. It's meant to be identical to
+  e2obbench.yaml, except for the repository format.
+state: /home/liw/benchmark-state/state-6.yaml
+git: /home/liw/obnam/obnam
+obnam_config:
+  repository-format: 6
+benchmarks:
+  - name: many_files
+    description: backup many small files
+    steps:
+      - live: genbackupdata . --create=1M --file-size=1
+        obnam: backup
+        reference: 150
+      - obnam: restore
+        reference: 150
+      - obnam: backup
+  - name: one_big_file
+    description: backup one big file
+    steps:
+      - live: genbackupdata . --create=10G --file-size=999999T
+        obnam: backup
+        reference: 93
+      - obnam: restore
+        reference: 93
+reports_dir: /home/liw/benchmark-state/reports-6
+html_dir: /home/liw/benchmark-state/html-6
+publish_html: |
+  rsync -ahHSs --delete-after "$HOME/benchmark-state/." \
+    obbench@pieni.net:benchmark/e2obbench-6-v1/.
