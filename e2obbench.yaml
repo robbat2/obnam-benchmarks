@@ -31,4 +31,4 @@ reports_dir: /home/liw/benchmark-state/reports
 html_dir: /home/liw/benchmark-state/html
 publish_html: |
   rsync -ahHSs --delete-after "$HOME/benchmark-state/." \
-    obbench@pieni.net:benchmark/.
+    obbench@pieni.net:benchmark/e2obbench-v2/.
