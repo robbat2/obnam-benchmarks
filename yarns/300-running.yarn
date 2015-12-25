@@ -1,0 +1,70 @@
+# Running obbench
+
+To run obbench we need to set up a benchmark specification. The
+examples below use the [yarn][] syntax, as they also form an automated
+test suite for obbench.
+
+[yarn]: http://liw.fi/cmdtest/
+
+    SCENARIO running obbench
+
+For this example, we use a very simple benchmark specification. Note
+that due to yarn syntax limitations, we use the JSON variant of YAML.
+
+    GIVEN a benchmark specification file simple.yaml containing
+    ... {
+    ...     git: "/home/liw/code/obnam/obnam",
+    ...     description: "Sample benchmark description.\n\n**There you go.**",
+    ...     benchmarks: [
+    ...         {
+    ...             name: silly,
+    ...             description: "It's a silly benchmark",
+    ...             steps: [
+    ...                 {
+    ...                     live: "genbackupdata --create=1k .",
+    ...                     obnam: backup
+    ...                 },
+    ...                 {
+    ...                     obnam: restore,
+    ...                 }
+    ...             ]
+    ...         },
+    ...         {
+    ...             name: moresilly,
+    ...             description: "It's **another** silly benchmark!",
+    ...             steps: [
+    ...                 {
+    ...                     live: "genbackupdata --create=1k .",
+    ...                     obnam: backup
+    ...                 },
+    ...                 {
+    ...                     obnam: backup
+    ...                 },
+    ...             ]
+    ...         }
+    ...     ]
+    ... }
+
+We also create a local configuration, also using YAML's JSON syntax:
+
+    GIVEN an obbench configuration file local.yaml containing
+    ... {
+    ...     config: {
+    ...         state: "statedir"
+    ...     }
+    ... }
+
+We then run obbench for the first time, for several commits. We run it
+twice for the tip of master, so that we know obbench handles running
+it twice for the same commit (e.g., because of environmental changes).
+
+    WHEN I run obbench --config local.yaml simple.yaml 
+    ... master~1 master master
+
+We now have some results.
+
+    THEN directory statedir exists
+    AND directory statedir/git/.git exists
+    AND files matching statedir/results/*.yaml exist
+    AND file statedir/html/index.html exists
+    AND file statedir/html/obbench.css exists

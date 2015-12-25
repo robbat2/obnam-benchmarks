@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>Obnam benchmarks</title>
+    <link rel="stylesheet" href="obbench.css" type="text/css" />
+  </head>
+  <body>
+    <h1>Obnam benchmarks</h1>
+    {{ description|safe }}
+    <table>
+      <tr>
+        <th>date</th>
+        <th>commit</th>
+        {% for name in benchmark_names %}
+        <th>{{ name }}</th>
+        {% endfor %}
+      </tr>
+      {% for row in results_table %}
+      <tr>
+        <td>{{ row.commit_date }}</td>
+        <td>{{ '%.7s'|format(row.commit_id) }}</td>
+        {% for name in benchmark_names %}
+        <td><a href="{{ name }}.html">{{ '%.1f'|format(row[name]) }}</a></td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

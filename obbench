@@ -17,471 +17,70 @@
 # =*= License: GPL-3+ =*=
 
 
-import glob
 import os
-import shutil
-import sys
-import tempfile
-import time
 
 import cliapp
-import jinja2
 import yaml
 
-
-summary_j2 = '''\
-{% autoescape true %}
-<html>
-    <head>
-        <title>Obnam benchmark: summary</title>
-        <link rel="stylesheet" href="benchmark.css" type="text/css" />
-    </head>
-    <body>
-        <h1>Obnam benchmark: summary</h1>
-
-        <h2>Benchmark results</h2>
-
-        <table>
-            <tr>
-                <th>date</th>
-                <th>commit</th>
-                <th>commit msg</th>
-                {% for name in benchmark_names %}
-                    <th>{{ name }} (seconds) <br/>(% of goal)</th>
-                {% endfor %}
-            </tr>
-
-            {% for run in runs %}
-                <tr>
-                    <td class="date">{{ run.date }}</td>
-                    <td class="commitid">{{ run.commit_id }}</td>
-                    <td class="commitmsg">{{ run.commit_msg }}</td>
-
-                    {% for name in benchmark_names %}
-                        <td class="duration">
-                            <a href="{{ run.links[name] }}">
-                                {{ run.durations[name] }}</a>
-                            ({{ run.references[name] }})
-                        </td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-
-        </table>
-
-        <h2>Benchmark spec</h2>
-        <p><pre>{{ spec }}</pre></p>
-
-    </body>
-</html>
-
-{% endautoescape %}
-'''
-
-
-benchmark_j2 = '''\
-{% autoescape true %}
-<html>
-    <head>
-        <title>Obnam benchmark: {{ obj.commit_id }} {{ obj.name }}</title>
-        <link rel="stylesheet" href="benchmark.css" type="text/css" />
-    </head>
-    <body>
-
-        <h1>Obnam benchmark: {{ obj.commit_id }} {{ obj.name }}</h1>
-
-        <table>
-            <tr>
-                {% for step in obj.steps %}
-                    {% if 'obnam' in step %}
-                        <th>{{ step.obnam }} seconds<br/> (% of goal)</th>
-                    {% endif %}
-                {% endfor %}
-            </tr>
-
-            <tr>
-                {% for step in obj.steps %}
-                    {% if 'obnam' in step %}
-                        <td><a href="{{ step.profile_filename }}">
-                            {{ step.duration_fmt }}</a> ({{step.reference_fmt }})</td>
-                    {% endif %}
-                {% endfor %}
-            </tr>
-        </table>
-    </body>
-</html>
-{% endautoescape %}
-'''
+import obbenchlib
 
 
 class ObnamBenchmarker(cliapp.Application):
 
+    def add_settings(self):
+        self.settings.string(
+            ['state'],
+            'keep state in DIR between runs',
+            metavar='DIR',
+            default='.')
+
     def process_args(self, args):
-        if not args:
-            raise cliapp.AppException('Need benchmark spec filename')
         spec = self.read_benchmark_spec(args[0])
-        state = self.read_state(spec)
-        self.logger = IndentedLogger()
-
-        tempdir = tempfile.mkdtemp()
-        for treeish in args[1:]:
-            self.logger.msg('Benchmarking treeish %s' % treeish)
-            with self.logger:
-                self.run_all_benchmarks(spec, state, treeish, tempdir)
-        self.save_state(spec, state)
-
-        self.logger.msg('Generating HTML')
-        self.generate_html(spec)
-
-        self.logger.msg('Cleaning up')
-        shutil.rmtree(tempdir)
+        statedir = self.create_state_directory()
+        self.clone_or_update_git(statedir, spec)
+        self.run_benchmarks(statedir, spec, args[1:])
+        self.produce_html(statedir, spec)
 
     def read_benchmark_spec(self, filename):
         with open(filename) as f:
             return yaml.safe_load(f)
 
-    def read_state(self, spec):
-        try:
-            with open(spec['state']) as f:
-                return yaml.safe_load(f)
-        except EnvironmentError:
-            return { 'commit_id': None }
+    def create_state_directory(self):
+        statedir = self.settings['state']
+        if not os.path.exists(statedir):
+            os.mkdir(statedir)
+        return statedir
 
-    def save_state(self, spec, state):
-        with open(spec['state'], 'w') as f:
-            return yaml.safe_dump(state, stream=f)
-
-    def run_all_benchmarks(self, spec, state, treeish, tempdir):
-        checkout = self.get_treeish(spec, treeish, tempdir)
-        commit_id = self.get_commit_id(checkout)
-        if commit_id == state['commit_id']:
-            self.logger.msg('Already benchmarked')
+    def clone_or_update_git(self, statedir, spec):
+        gitdir = self.gitdir(statedir)
+        if os.path.exists(gitdir):
+            cliapp.runcmd(['git', 'pull'])
         else:
-            self.prepare_obnam(checkout)
-            for benchmark in spec.get('benchmarks', []):
-                result = self.run_one_benchmark(
-                    spec, benchmark, tempdir, checkout)
-                self.save_result(spec, benchmark, result)
-            state['commit_id'] = commit_id
+            cliapp.runcmd(['git', 'clone', spec['git'], gitdir])
 
-    def get_treeish(self, spec, treeish, tempdir):
-        checkout = os.path.join(tempdir, 'git')
-        if not os.path.exists(checkout):
-            cliapp.runcmd(['git', 'clone', spec['git'], checkout])
-        cliapp.runcmd(['git', 'checkout', treeish], cwd=checkout)
-        cliapp.runcmd(['git', 'clean', '-fdxq'], cwd=checkout)
-        return checkout
+    def gitdir(self, statedir):
+        return os.path.join(statedir, 'git')
 
-    def get_commit_id(self, checkout):
-        output = cliapp.runcmd(['git', 'rev-parse', 'HEAD'], cwd=checkout)
-        return output.strip()
+    def run_benchmarks(self, statedir, spec, refs):
+        benchmarker = obbenchlib.Benchmarker()
+        benchmarker.statedir = statedir
+        benchmarker.gitdir = self.gitdir(statedir)
+        benchmarker.resultdir = self.resultdir(statedir)
+        benchmarker.spec = spec
+        for ref in refs:
+            benchmarker.run_benchmarks(ref)
 
-    def prepare_obnam(self, checkout):
-        cliapp.runcmd(['python', 'setup.py', 'build_ext', '-i'], cwd=checkout)
+    def resultdir(self, statedir):
+        return os.path.join(statedir, 'results')
 
-    def run_one_benchmark(self, spec, benchmark, tempdir, checkout):
-        self.logger.msg('Running benchmark %s' % benchmark['name'])
-        with self.logger:
-            result = BenchmarkResult()
-            result.collect_info_from_spec(benchmark)
-            result.collect_info_from_checkout(checkout)
+    def produce_html(self, statedir, spec):
+        gen = obbenchlib.HtmlGenerator()
+        gen.statedir = statedir
+        gen.resultdir = self.resultdir(statedir)
+        gen.gitdir = self.gitdir(statedir)
+        gen.spec = spec
+        gen.generate_html()
 
-            config = self.create_obnam_config(spec, benchmark, tempdir)
-
-            live = self.create_live_dir(tempdir)
-            for step in benchmark.get('steps', []):
-                self.run_benchmark_step(
-                    step, tempdir, checkout, config, live, result)
-            return result
-
-    def create_obnam_config(self, spec, benchmark, tempdir):
-        config = os.path.join(tempdir, 'obnam.conf')
-        with open(config, 'w') as f:
-            f.write('[config]\n')
-            f.write('quiet = yes\n')
-            f.write('repository = %s\n' % os.path.join(tempdir, 'repo'))
-            f.write('root = %s\n' % self.get_live_data(tempdir))
-            f.write('log = %s\n' % os.path.join(tempdir, 'obnam.log'))
-            for key, value in spec.get('obnam_config', {}).items():
-                f.write('%s = %s\n' % (key, value))
-            for key, value in benchmark.get('obnam_config', {}).items():
-                f.write('%s = %s\n' % (key, value))
-        return config
-
-    def get_live_data(self, tempdir):
-        return os.path.join(tempdir, 'live')
-
-    def create_live_dir(self, tempdir):
-        live = self.get_live_data(tempdir)
-        if os.path.exists(live):
-            shutil.rmtree(live)
-        os.mkdir(live)
-        return live
-
-    def run_benchmark_step(self,
-                           step, tempdir, checkout, config, live, result):
-        step_info = dict(step)
-
-        if 'live' in step:
-            self.logger.msg('Creating live data: %s' % step['live'])
-            cliapp.runcmd(['sh', '-euc', step['live']], cwd=live)
-
-        action = step['obnam']
-        self.logger.msg('Obnam %s' % action)
-        func = funcs = {
-            'backup': self.run_backup,
-            'restore': self.run_restore,
-        }
-        started = time.time()
-        funcs[action](tempdir, checkout, config, step_info)
-        ended = time.time()
-        step_info['duration'] = ended - started
-
-        result.add_step(step_info)
-
-    def run_backup(self, tempdir, checkout, config, step_info):
-        self.run_obnam(step_info, checkout, ['backup', '--config', config])
-
-    def run_restore(self, tempdir, checkout, config, step_info):
-        restored = os.path.join(tempdir, 'restored')
-        if os.path.exists(restored):
-            shutil.rmtree(restored)
-        self.run_obnam(
-            step_info, checkout,
-            ['restore', '--config', config, '--to', restored])
-
-    def run_obnam(self, step_info, checkout, args):
-        env = dict(os.environ)
-        env['OBNAM_PROFILE'] = 'obnam.prof'
-        cliapp.runcmd(
-            ['./obnam', '--no-default-config'] + args,
-            env=env,
-            cwd=checkout)
-        step_info['profile'] = cliapp.runcmd(
-            ['./obnam-viewprof', 'obnam.prof'],
-            cwd=checkout)
-
-    def save_result(self, spec, benchmark, result):
-        obj = result.as_dict()
-        pathname = self.get_report_pathname(spec, benchmark, result)
-        with open(pathname, 'w') as f:
-            yaml.safe_dump(obj, stream=f, default_flow_style=False, indent=4)
-
-    def get_report_pathname(self, spec, benchmark, result):
-        return os.path.join(
-            spec['reports_dir'],
-            '%s_%s.yaml' % (result.get_commit_id(), benchmark['name']))
-
-    def generate_html(self, spec):
-        objs = self.read_results_files(spec)
-        for obj in objs:
-            self.write_benchmark_page(spec, obj)
-        self.write_summary_page(spec, objs)
-        self.copy_css_file(spec)
-        self.publish_html(spec)
-
-    def read_results_files(self, spec):
-        objs = []
-        for filename in glob.glob(os.path.join(spec['reports_dir'], '*.yaml')):
-            with open(filename) as f:
-                objs.append(yaml.safe_load(f))
-        return objs
-
-    def write_benchmark_page(self, spec, obj):
-        for benchmark in spec['benchmarks']:
-            if benchmark['name'] == obj['name']:
-                break
-        else:
-            benchmark = {}
-
-        filename = os.path.join(
-            spec['html_dir'],
-            '{}_{}.html'.format(obj['commit_id'], obj['name']))
-        with open(filename, 'w') as f:
-            for index, step in enumerate(obj['steps']):
-                if 'obnam' not in step:
-                    continue
-
-                basename = '{commit}_{name}_{index}.txt'.format(
-                    commit=obj['commit_id'],
-                    name=obj['name'],
-                    index=index)
-
-                filename = os.path.join(spec['html_dir'], basename)
-                with open(filename, 'w') as profile:
-                    profile.write(step['profile'])
-                step['profile_filename'] = basename
-
-                reference = 'unknown'
-                if benchmark is not None:
-                    spec_step = benchmark['steps'][index]
-                    if 'reference' in spec_step:
-                        reference = '%.1f %%' % (
-                            100.0 * step['duration'] / spec_step['reference'])
-                step['reference_fmt'] = reference
-
-                step['duration_fmt'] = '%.1f' % step['duration']
-
-            vars = {
-                'obj': obj,
-            }
-
-            env = jinja2.Environment(
-                autoescape=lambda foo: True,
-                extensions=['jinja2.ext.autoescape'])
-            template = env.from_string(benchmark_j2)
-            f.write(template.render(**vars))
-
-    def q(self, text):
-        '''Quote for HTML'''
-        text = str(text)
-        text = '&amp;'.join(text.split('&'))
-        text = '&lt;'.join(text.split('<'))
-        text = '&gt;'.join(text.split('>'))
-        return text
-
-    def write_summary_page(self, spec, objs):
-        benchmark_names = self.find_benchmark_names(objs)
-        runs = self.create_table_of_benchmark_runs(benchmark_names, objs)
-
-        filename = os.path.join(spec['html_dir'], 'index.html')
-        with open(filename, 'w') as f:
-            for run in runs:
-                run['links'] = {}
-                run['references'] = {}
-                for name in benchmark_names:
-                    reference = sum(
-                        sum(x.get('reference', 0) for x in b['steps'])
-                        for b in spec['benchmarks']
-                        if b['name'] == name)
-                    if reference > 0:
-                        reference = '%.1f %%' % (
-                            100.0 * run['durations'][name] / reference)
-                    else:
-                        reference = 'unknown'
-                    run['references'][name] = reference
-
-                    run['links'][name] = '{commit}_{name}.html'.format(
-                        commit=self.q(run['commit_id']),
-                        name=self.q(name))
-                    run['durations'][name] = '%.1f' % run['durations'][name]
-
-            vars = {
-                'benchmark_names': benchmark_names,
-                'runs': runs,
-                'spec': yaml.safe_dump(
-                    spec, default_flow_style=False, indent=4),
-            }
-
-            env = jinja2.Environment(
-                autoescape=lambda foo: True,
-                extensions=['jinja2.ext.autoescape'])
-            template = env.from_string(summary_j2)
-            f.write(template.render(**vars))
-
-
-    def find_benchmark_names(self, objs):
-        return list(sorted(set(o['name'] for o in objs)))
-
-    def create_table_of_benchmark_runs(self, names, objs):
-
-        def make_key(obj):
-            return (obj['date'], obj['commit_id'])
-
-        def total(obj, field):
-            return sum(step.get(field, 0) for step in obj['steps'])
-
-        sorted_objs = []
-        for obj in objs:
-            sorted_objs.append((make_key(obj), obj))
-        sorted_objs.sort()
-
-        runs = []
-        for key, obj in sorted_objs:
-            if not runs or make_key(runs[-1]) != key:
-                runs.append({
-                    'date': obj['date'],
-                    'commit_id': obj['commit_id'],
-                    'commit_msg': obj['commit_msg'],
-                    'durations': { obj['name']: total(obj, 'duration') },
-                })
-            else:
-                runs[-1]['durations'][obj['name']] = total(obj, 'duration')
-
-        return runs
-
-    def copy_css_file(self, spec):
-        filename = os.path.join(spec['html_dir'], 'benchmark.css')
-        shutil.copy('benchmark.css', filename)
-
-    def publish_html(self, spec):
-        if 'publish_html' in spec:
-            self.logger.msg('Publishing HTML')
-            cliapp.runcmd(
-                ['sh', '-euc', spec['publish_html']],
-                cwd=spec['html_dir'])
-
-
-class BenchmarkResult(object):
-
-    def __init__(self):
-        self._dict = {}
-
-    def as_dict(self):
-        return self._dict
-
-    def collect_info_from_spec(self, spec):
-        self._dict['name'] = spec['name']
-
-    def collect_info_from_checkout(self, checkout):
-        self.collect_checkout_commit_id(checkout)
-        self.collect_checkout_commit_date(checkout)
-        self.collect_checkout_commit_first_line(checkout)
-
-    def collect_checkout_commit_id(self, checkout):
-        output = cliapp.runcmd(['git', 'rev-parse', 'HEAD'], cwd=checkout)
-        self._dict['commit_id'] = output.strip()[:7]
-
-    def collect_checkout_commit_date(self, checkout):
-        self._dict['date'] = 'unknown'
-        output = cliapp.runcmd(
-            ['git', 'show', '--date=iso', 'HEAD'],
-            cwd=checkout)
-        for line in output.splitlines():
-            if line.startswith('Date:'):
-                self._dict['date'] = line[len('Date:'):].strip()
-                break
-
-    def collect_checkout_commit_first_line(self, checkout):
-        output = cliapp.runcmd(
-            ['git', 'show', '--pretty=oneline', 'HEAD'],
-            cwd=checkout)
-        line1 = output.splitlines()[0].split(' ', 1)[1]
-        self._dict['commit_msg'] = line1
-
-    def add_step(self, step_info):
-        self._dict['steps'] = self._dict.get('steps', []) + [step_info]
-
-    def get_commit_id(self):
-        return self._dict['commit_id']
-
-
-class IndentedLogger(object):
-
-    def __init__(self):
-        self._level = 0
-        self._indent = 2
-
-    def msg(self, text):
-        sys.stdout.write(' ' * (self._level * self._indent))
-        sys.stdout.write(text + '\n')
-        sys.stdout.flush()
-
-    def __enter__(self):
-        self._level += 1
-
-    def __exit__(self, *args):
-        self._level -= 1
 
 if __name__ == '__main__':
     ObnamBenchmarker().run()

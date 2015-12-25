@@ -1,0 +1,26 @@
+# Introduction
+
+This is the manual for `obbench`, a tool for benchmarking the
+[Obnam][] backup program. The obbench program is at least the fifth
+generation of the tool: the author seems to have a big difficulty
+trying to figure out how benchmarking should be done.
+
+[Obnam]: http://obnam.org/
+
+The obbench approach is that its operation is defined in a benchmark
+specification file, rather than code. The code provides some primitive
+operations, which can be combined in various ways in the specification
+file. The goal is that new benchmarks can be specified easily, without
+changing obbench itself.
+
+Additionally, obbench measures various aspects of running Obnam and
+the resulting backup repository, and generates a static website to
+report the results.
+
+## Installation
+
+Obbench can be run from its git source tree (`./obbench`), without any
+build steps required. Additionally, the author will provide Debian
+packages on [code.liw.fi][].
+
+[code.liw.fi]: http://liw.fi/code/

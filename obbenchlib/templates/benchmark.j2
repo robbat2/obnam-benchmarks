@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <title>Obnam benchmark: {{ benchmark_name }}</title>
+    <link rel="stylesheet" href="obbench.css" type="text/css" />
+  </head>
+  <body>
+    <h1>Obnam benchmark: {{ benchmark_name }}</h1>
+
+    <p><a href="index.html">Front page</a></p>
+
+    {{ description|safe }}
+
+    <table>
+      <tr>
+        <th>date</th>
+        <th>commit</th>
+        {% for step_name in step_names %}
+        <th>{{ step_name }}</th>
+        {% endfor %}
+        <th>total</th>
+      </tr>
+      {% for row in table_rows %}
+      <tr>
+        <td>{{ row.commit_date }}</td>
+        <td>{{ '%.7s'|format(row.commit_id) }}</td>
+        {% for step in row.steps %}
+        <td>
+          <a href="{{ step.filename_txt }}">
+            {{ '%.1f'|format(step.duration) }}
+          </a>
+        </td>
+        {% endfor %}
+        <td>{{ '%.1f'|format(row.total) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

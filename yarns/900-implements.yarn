@@ -1,0 +1,58 @@
+# Scenario step implementations
+
+This chapter contains implementations of the scenario steps, so that
+this manual may be used as an automated test suite for obbench. See
+[yarn][] documentation for understanding this.
+
+We use Python to implement the steps. This requires at least
+version 0.19 of yarn.
+
+## Create benchmark specification file
+
+    IMPLEMENTS GIVEN a benchmark specification file (\S+) containing (.*)
+    import os
+    filename = os.environ['MATCH_1']
+    config_text = os.environ['MATCH_2']
+    with open(filename, 'w') as f:
+        f.write(config_text)
+
+## Create a local configuration file
+
+    IMPLEMENTS GIVEN an obbench configuration file (\S+) containing (.*)
+    import os
+    filename = os.environ['MATCH_1']
+    config_text = os.environ['MATCH_2']
+    with open(filename, 'w') as f:
+        f.write(config_text)
+
+## Run obbench, with arguments
+
+    IMPLEMENTS WHEN I run obbench (.*)
+    import os
+    import cliapp
+    arg_string = os.environ['MATCH_1']
+    args = arg_string.split()
+    srcdir = os.environ['SRCDIR']
+    obbench = os.path.join(srcdir, 'obbench')
+    cliapp.runcmd([obbench] + args, stdout=None, stderr=None)
+
+### Check directory existence
+
+    IMPLEMENTS THEN directory (\S+) exists
+    import os
+    dirname = os.environ['MATCH_1']
+    assert os.path.isdir(dirname), "dir {} doesn't exist".format(dirname)
+
+### Check file existence
+
+    IMPLEMENTS THEN file (\S+) exists
+    import os
+    filename = os.environ['MATCH_1']
+    assert os.path.isfile(filename), "file {} doesn't exist".format(filename)
+
+### Check glob matching
+
+    IMPLEMENTS THEN files matching (\S+) exist
+    import glob, os
+    pattern = os.environ['MATCH_1']
+    assert glob.glob(pattern) != [], "glob {} doesn't match".format(pattern)

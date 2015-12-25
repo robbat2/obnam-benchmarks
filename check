@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -e
+
+yarn --cd-datadir --shell python2 --shell-arg '' yarns/*.yarn "$@"
