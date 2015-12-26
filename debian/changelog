@@ -1,6 +1,6 @@
-obbench (0.1-1) UNRELEASED; urgency=low
+obbench (0.1-1) unstable; urgency=low
 
   * Initial packaging. This is not intended to be uploaded to Debian, so
     no closing of an ITP bug.
 
- -- Lars Wirzenius <liw@liw.fi>  Sat, 08 May 2010 11:10:24 +1200
+ -- Lars Wirzenius <liw@liw.fi>  Sat, 26 Dec 2015 21:08:20 +0100
