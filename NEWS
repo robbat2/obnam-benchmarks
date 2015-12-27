@@ -1,7 +1,12 @@
 NEWS file for obbench
 =====================
 
-Version 0.1, released 2015-12-16
+Version 0.2, released 2015-12-27
+--------------------------------
+
+* Fix updating a git clone.
+
+Version 0.1, released 2015-12-26
 --------------------------------
 
 * First release after a rewrite.
