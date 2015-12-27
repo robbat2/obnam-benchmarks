@@ -20,6 +20,7 @@
 import os
 
 import cliapp
+import ttystatus
 import yaml
 
 import obbenchlib
@@ -74,6 +75,7 @@ class ObnamBenchmarker(cliapp.Application):
         return os.path.join(statedir, 'results')
 
     def produce_html(self, statedir, spec):
+        print 'Producing HTML'
         gen = obbenchlib.HtmlGenerator()
         gen.statedir = statedir
         gen.resultdir = self.resultdir(statedir)

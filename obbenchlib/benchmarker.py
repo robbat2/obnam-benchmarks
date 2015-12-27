@@ -45,6 +45,9 @@ class Benchmarker(object):
         self.spec = None
 
     def run_benchmarks(self, ref):
+        print 'Running benchmarks for', ref
+        print
+
         tempdir = self.create_temp_dir()
         self._livedir = self.create_subdir(tempdir, 'live')
         self._repodir = self.create_subdir(tempdir, 'repo')
@@ -59,7 +62,10 @@ class Benchmarker(object):
         for benchmark in self.spec['benchmarks']:
             result = self.run_benchmark(benchmark)
             result.save_in_dir(self.resultdir)
+
+        print 'Cleaning up'
         self.remove_temp_dir(tempdir)
+        print
 
     def create_temp_dir(self):
         return tempfile.mkdtemp()
@@ -76,7 +82,7 @@ class Benchmarker(object):
         config = os.path.join(tempdir, 'obnam.conf')
         with open(config, 'w') as f:
             f.write('[config]\n')
-            f.write('quiet = yes\n')
+            f.write('quiet = no\n')
             f.write('repository = %s\n' % self._repodir)
             f.write('root = %s\n' % self._livedir)
         return config
@@ -89,6 +95,7 @@ class Benchmarker(object):
             cwd=self._srcdir)
 
     def run_benchmark(self, benchmark):
+        print 'Running benchmark {}'.format(benchmark['name'])
         result = obbenchlib.Result()
         result.benchmark_name = benchmark['name']
         result.run_timestamp = self._timestamp
@@ -98,6 +105,7 @@ class Benchmarker(object):
         for step in benchmark['steps']:
             result.start_step()
             self.run_step(result, step)
+        print
         return result
 
     def get_commit_date(self):
@@ -123,12 +131,14 @@ class Benchmarker(object):
         self.run_step_obnam(result, step['obnam'])
 
     def run_step_live(self, result, shell_command):
+        print 'Running live:', shell_command
         started = time.time()
         cliapp.runcmd(['sh', '-euc', shell_command], cwd=self._livedir)
         duration = time.time() - started
         result.set_value('live', 'duration', duration)
 
     def run_step_obnam(self, result, obnam_subcommand):
+        print 'Running obnam:', obnam_subcommand
         funcs = {
             'backup': self.run_obnam_backup,
             'restore': self.run_obnam_restore,
