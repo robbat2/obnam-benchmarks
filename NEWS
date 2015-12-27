@@ -1,6 +1,13 @@
 NEWS file for obbench
 =====================
 
+Version 0.3, released 2015-12-27
+--------------------------------
+
+* Produce some progress reporting so it's not so boring to watch a
+  benchmark run. This includes letting Obnam produce progress
+  reporting.
+
 Version 0.2, released 2015-12-27
 --------------------------------
 
