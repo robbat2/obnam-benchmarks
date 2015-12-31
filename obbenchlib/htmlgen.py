@@ -104,6 +104,8 @@ class FrontPage(HtmlPage):
                 for benchmark in sorted(self.spec['benchmarks'])
             ],
             'results_table': self.results_table(),
+            'spec': yaml.safe_dump(
+                self.spec, indent=4, default_flow_style=False)
         }
         yield 'index.html', self.render('index.j2', variables)
 
