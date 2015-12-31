@@ -153,6 +153,8 @@ class BenchmarkPage(HtmlPage):
                 benchmark.get('description', '')),
             'table_rows': table_rows,
             'step_names': self.get_step_names(benchmark),
+            'spec': yaml.safe_dump(
+                benchmark, indent=4, default_flow_style=False)
         }
 
         return (
