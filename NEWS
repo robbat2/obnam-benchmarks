@@ -1,6 +1,12 @@
 NEWS file for obbench
 =====================
 
+Version 0.5, released 2015-12-31
+--------------------------------
+
+* Bug fix for `obnam_config` implementation. I should've written
+  tests.
+
 Version 0.4, released 2015-12-31
 --------------------------------
 
