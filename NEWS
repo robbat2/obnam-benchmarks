@@ -7,6 +7,8 @@ Version 0.4, released UNRELEASED
 * Put the spec file on the front page of HTML output, and the spec for
   each benchmark on the benchmark's HTML page.
 
+* Actually obey the `obnam_config` part of the spec file. Oops.
+
 Version 0.3, released 2015-12-27
 --------------------------------
 

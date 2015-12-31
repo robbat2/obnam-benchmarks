@@ -85,6 +85,8 @@ class Benchmarker(object):
             f.write('quiet = no\n')
             f.write('repository = %s\n' % self._repodir)
             f.write('root = %s\n' % self._livedir)
+            for key, value in self.spec.get('obnam_config', {}):
+                f.write('%s = %s\n' % (key, value))
         return config
 
     def prepare_obnam(self, ref):
