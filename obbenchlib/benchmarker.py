@@ -157,7 +157,7 @@ class Benchmarker(object):
         self.run_obnam(['backup'])
 
     def run_obnam_restore(self):
-        self.run_obnam(['restore', '-to', self._restored])
+        self.run_obnam(['restore', '--to', self._restored])
 
     def run_obnam(self, args):
         env = dict(os.environ)

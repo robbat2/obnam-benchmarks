@@ -1,6 +1,11 @@
 NEWS file for obbench
 =====================
 
+Version 0.6, released UNRELEASED
+--------------------------------
+
+* Fix the `restore` part of a benchmark so it actually works.
+
 Version 0.5, released 2015-12-31
 --------------------------------
 
