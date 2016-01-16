@@ -1,7 +1,7 @@
 NEWS file for obbench
 =====================
 
-Version 0.7, released UNRELEASED
+Version 0.7, released 2016-01-16
 --------------------------------
 
 * Fix the `restore part` **again**. This time it was breaking because
