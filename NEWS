@@ -1,6 +1,14 @@
 NEWS file for obbench
 =====================
 
+Version 0.7, released UNRELEASED
+--------------------------------
+
+* Fix the `restore part` **again**. This time it was breaking because
+  the temporary directory to which restores happen gets reused, and
+  the second time it fails, 'cause it needs to be empty, 'cause I said
+  so.
+
 Version 0.6, released 2016-01-01
 --------------------------------
 

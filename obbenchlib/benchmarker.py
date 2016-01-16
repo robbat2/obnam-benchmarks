@@ -157,6 +157,7 @@ class Benchmarker(object):
         self.run_obnam(['backup'])
 
     def run_obnam_restore(self):
+        cliapp.runcmd(['find', self._restored, '-delete'])
         self.run_obnam(['restore', '--to', self._restored])
 
     def run_obnam(self, args):
