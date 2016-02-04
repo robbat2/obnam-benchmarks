@@ -45,27 +45,28 @@ class Benchmarker(object):
         self.spec = None
 
     def run_benchmarks(self, ref):
+        print
         print 'Running benchmarks for', ref
         print
 
-        tempdir = self.create_temp_dir()
-        self._livedir = self.create_subdir(tempdir, 'live')
-        self._repodir = self.create_subdir(tempdir, 'repo')
-        self._srcdir = self.create_subdir(tempdir, 'src')
-        self._restored = self.create_subdir(tempdir, 'restored')
-        self._config = self.prepare_obnam_config(tempdir)
-        self._timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-
-        self.prepare_obnam(ref)
         if not os.path.exists(self.resultdir):
             os.mkdir(self.resultdir)
+
         for benchmark in self.spec['benchmarks']:
+            tempdir = self.create_temp_dir()
+            self._livedir = self.create_subdir(tempdir, 'live')
+            self._repodir = self.create_subdir(tempdir, 'repo')
+            self._srcdir = self.create_subdir(tempdir, 'src')
+            self._restored = self.create_subdir(tempdir, 'restored')
+            self._config = self.prepare_obnam_config(tempdir)
+            self._timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+
+            self.prepare_obnam(ref)
             result = self.run_benchmark(benchmark)
             result.save_in_dir(self.resultdir)
 
-        print 'Cleaning up'
-        self.remove_temp_dir(tempdir)
-        print
+            print 'Cleaning up'
+            self.remove_temp_dir(tempdir)
 
     def create_temp_dir(self):
         return tempfile.mkdtemp()
