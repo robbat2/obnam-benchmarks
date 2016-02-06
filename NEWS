@@ -1,6 +1,12 @@
 NEWS file for obbench
 =====================
 
+Version 0.9, released UNRELEASED
+--------------------------------
+
+* Fix clone of git repo to check out master, to fix test suite when
+  the Obnam git repo doesn't have master checked out.
+
 Version 0.8, released 2016-02-06
 --------------------------------
 

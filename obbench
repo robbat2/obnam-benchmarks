@@ -57,7 +57,9 @@ class ObnamBenchmarker(cliapp.Application):
         if os.path.exists(gitdir):
             cliapp.runcmd(['git', 'pull'], cwd=gitdir)
         else:
-            cliapp.runcmd(['git', 'clone', spec['git'], gitdir])
+            cliapp.runcmd(
+                ['git', 'clone', '-b', 'master', spec['git'],
+                 gitdir])
 
     def gitdir(self, statedir):
         return os.path.join(statedir, 'git')
