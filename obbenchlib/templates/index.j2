@@ -19,9 +19,11 @@
         <td>{{ row.commit_date }}</td>
         <td>{{ '%.7s'|format(row.commit_id) }}</td>
         {% for name in benchmark_names %}
-        {%   if name in row %}
-        <td><a href="{{ name }}.html">{{ '%.1f'|format(row[name]) }}</a></td>
-        {%   endif %}
+        <td>
+          {%   if name in row %}
+          <a href="{{ name }}.html">{{ '%.1f'|format(row[name]) }}</a>
+          {%   endif %}
+        </td>
         {% endfor %}
       </tr>
       {% endfor %}
