@@ -52,6 +52,11 @@ class Benchmarker(object):
         if not os.path.exists(self.resultdir):
             os.mkdir(self.resultdir)
 
+        # We want to use the same timestamp for all benchmarks. This
+        # is necessary so that all the benchmarks from one run for the
+        # same commit are easy to align.
+        self._timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+
         for benchmark in self.spec['benchmarks']:
             tempdir = self.create_temp_dir()
             self._livedir = self.create_subdir(tempdir, 'live')
@@ -59,7 +64,6 @@ class Benchmarker(object):
             self._srcdir = self.create_subdir(tempdir, 'src')
             self._restored = self.create_subdir(tempdir, 'restored')
             self._config = self.prepare_obnam_config(tempdir)
-            self._timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
             self.prepare_obnam(ref)
             result = self.run_benchmark(benchmark)
