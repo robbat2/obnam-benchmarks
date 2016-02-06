@@ -1,3 +1,9 @@
+obbench (0.8-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Lars Wirzenius <liw@liw.fi>  Sat, 06 Feb 2016 15:30:11 +0200
+
 obbench (0.7-1) unstable; urgency=medium
 
   * New upstream version.

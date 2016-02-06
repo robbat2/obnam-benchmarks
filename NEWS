@@ -1,6 +1,11 @@
 NEWS file for obbench
 =====================
 
+Version 0.8, released 2016-02-06
+--------------------------------
+
+* Fix bugs that prevent having multiple runs or multiple benchmarks.
+
 Version 0.7, released 2016-01-16
 --------------------------------
 
