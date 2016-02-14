@@ -1,3 +1,9 @@
+obbench (0.10+git-1) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Lars Wirzenius <liw@liw.fi>  Sun, 14 Feb 2016 14:35:04 +0200
+
 obbench (0.10-1) unstable; urgency=medium
 
   * Add build and runtime dependency on python-cliapp.
