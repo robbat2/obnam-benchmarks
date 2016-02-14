@@ -1,6 +1,6 @@
 obbench (0.9+git-1) UNRELEASED; urgency=medium
 
-  * 
+  * Add build and runtime dependency on python-cliapp.
 
  -- Lars Wirzenius <liw@liw.fi>  Sun, 14 Feb 2016 14:24:24 +0200
 
