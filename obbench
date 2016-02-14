@@ -87,4 +87,4 @@ class ObnamBenchmarker(cliapp.Application):
 
 
 if __name__ == '__main__':
-    ObnamBenchmarker().run()
+    ObnamBenchmarker(version=obbenchlib.__version__).run()
