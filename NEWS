@@ -4,6 +4,8 @@ NEWS file for obbench
 Version 0.10+git, not yet released
 ----------------------------------
 
+* Fix bugs in Debian packaging by adding missing dependencies, both
+  build-time and run-time.
 
 Version 0.10, released 2016-02-14
 ---------------------------------
