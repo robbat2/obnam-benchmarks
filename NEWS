@@ -1,7 +1,7 @@
 NEWS file for obbench
 =====================
 
-Version 0.9, not yet released
+Version 0.9, released 2016-02-14
 --------------------------------
 
 * Fix clone of git repo to check out master, to fix test suite when
