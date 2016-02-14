@@ -18,8 +18,10 @@
 from distutils.core import setup, Extension
 import glob
 
+import obbenchlib
+
 setup(name='obbench',
-      version='0.9',
+      version=obbenchlib.__version__,
       description='Obnam benchmarking',
       author='Lars Wirzenius',
       author_email='liw@liw.fi',
