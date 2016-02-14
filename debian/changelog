@@ -1,6 +1,6 @@
 obbench (0.10+git-1) UNRELEASED; urgency=medium
 
-  * 
+  * Add build and runtime dependency on python-jinja2.
 
  -- Lars Wirzenius <liw@liw.fi>  Sun, 14 Feb 2016 14:35:04 +0200
 
