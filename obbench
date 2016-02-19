@@ -34,6 +34,10 @@ class ObnamBenchmarker(cliapp.Application):
             'keep state in DIR between runs',
             metavar='DIR',
             default='.')
+        self.settings.string(
+            ['publish-command'],
+            'after a successful run, run COMMAND',
+            metavar='COMMAND')
 
     def process_args(self, args):
         spec = self.read_benchmark_spec(args[0])
@@ -41,6 +45,7 @@ class ObnamBenchmarker(cliapp.Application):
         self.clone_or_update_git(statedir, spec)
         self.run_benchmarks(statedir, spec, args[1:])
         self.produce_html(statedir, spec)
+        self.publish(statedir)
 
     def read_benchmark_spec(self, filename):
         with open(filename) as f:
@@ -84,6 +89,12 @@ class ObnamBenchmarker(cliapp.Application):
         gen.gitdir = self.gitdir(statedir)
         gen.spec = spec
         gen.generate_html()
+
+    def publish(self, statedir):
+        command = self.settings['publish-command']
+        if command:
+            print 'Publishing using {}'.format(command)
+            cliapp.runcmd(['sh', '-c', command], cwd=statedir)
 
 
 if __name__ == '__main__':
