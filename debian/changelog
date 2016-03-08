@@ -1,8 +1,9 @@
-obbench (0.11+git-1) UNRELEASED; urgency=medium
+obbench (0.12-1) unstable; urgency=medium
 
   * 
+  * New upstream version.
 
- -- Lars Wirzenius <liw@liw.fi>  Sun, 14 Feb 2016 15:23:25 +0200
+ -- Lars Wirzenius <liw@liw.fi>  Tue, 08 Mar 2016 12:23:48 +0200
 
 obbench (0.11-1) unstable; urgency=medium
 

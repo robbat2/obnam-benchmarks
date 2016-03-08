@@ -1,7 +1,7 @@
 NEWS file for obbench
 =====================
 
-Version 0.11+git, not yet released
+Version 0.12, released 2016-03-08
 ----------------------------------
 
 * Added the `--publish-command` setting, to allow a command to be run
