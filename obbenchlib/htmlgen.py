@@ -206,6 +206,10 @@ class BenchmarkPage(HtmlPage):
                     row['steps'].append({
                         'filename_txt': '{}_{}.txt'.format(
                             result['result_id'], i),
+                        'filename_prof': '{}_{}.prof'.format(
+                            result['result_id'], i),
+                        'filename_log': '{}_{}.log'.format(
+                            result['result_id'], i),
                         'duration': step[step_name]['duration'],
                         'vmrss': vmrss,
                     })

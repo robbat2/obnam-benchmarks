@@ -19,7 +19,7 @@
         <th>&nbsp;<br>VmRSS</th>
         {% endfor %}
         <th>total<br>time</th>
-        <th>&nbsp;<br>VmRSS</th>
+        <th>max<br>VmRSS</th>
       </tr>
       {% for row in table_rows %}
       <tr>
@@ -28,10 +28,16 @@
         {% for step in row.steps %}
         <td>
           <a href="{{ step.filename_txt }}">
-            {{ '%.1f'|format(step.duration) }}
-          </a>
+            {{ '%.1f'|format(step.duration) }}</a>
+          <span class="links">
+            <a href="{{ step.filename_prof }}">prof</a>
+          </span>
         </td>
-        <td>{{ step.vmrss }}</td>
+        <td>{{ step.vmrss }}
+          <span class="links">
+            <a href="{{ step.filename_log }}">log</a>
+          </span>
+        </td>
         {% endfor %}
         <td>{{ '%.1f'|format(row.total) }}</td>
         <td>{{ '%d'|format(row.vmrss_max) }}</td>

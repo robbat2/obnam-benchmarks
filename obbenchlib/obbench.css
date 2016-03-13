@@ -25,3 +25,7 @@ td.commitid {
 td.commitmsg {
 //    max-width: 30em;
 }
+
+span.links {
+    font-size: 70%;
+}
