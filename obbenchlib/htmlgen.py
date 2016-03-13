@@ -42,7 +42,13 @@ class HtmlGenerator(object):
             extensions=['jinja2.ext.autoescape'])
 
         self.create_html_dir()
-        page_classes = [FrontPage, BenchmarkPage, ProfileData, CssFile]
+        page_classes = [
+            FrontPage,
+            BenchmarkPage,
+            ProfileData,
+            LogFile,
+            CssFile,
+        ]
         for page_class in page_classes:
             page = page_class()
             page.env = env
@@ -224,6 +230,21 @@ class ProfileData(HtmlPage):
     def generate_profile_text(self, result, step, i, operation):
         filename = '{}_{}.txt'.format(result['result_id'], i)
         return filename, step[operation]['profile-text']
+
+
+class LogFile(HtmlPage):
+
+    def generate(self):
+        for result in self.results:
+            for i, step in enumerate(result['steps']):
+                for operation in step:
+                    if 'log' in step[operation]:
+                        yield self.generate_log_file(
+                            result, step, i, operation)
+
+    def generate_log_file(self, result, step, i, operation):
+        filename = '{}_{}.log'.format(result['result_id'], i)
+        return filename, step[operation]['log']
 
 
 class CssFile(object):
