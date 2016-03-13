@@ -15,9 +15,11 @@
         <th>date</th>
         <th>commit</th>
         {% for step_name in step_names %}
-        <th>{{ step_name }}</th>
+        <th>{{ step_name }}<br>time</th>
+        <th>&nbsp;<br>VmRSS</th>
         {% endfor %}
-        <th>total</th>
+        <th>total<br>time</th>
+        <th>&nbsp;<br>VmRSS</th>
       </tr>
       {% for row in table_rows %}
       <tr>
@@ -29,8 +31,10 @@
             {{ '%.1f'|format(step.duration) }}
           </a>
         </td>
+        <td>{{ step.vmrss }}</td>
         {% endfor %}
         <td>{{ '%.1f'|format(row.total) }}</td>
+        <td>{{ '%d'|format(row.vmrss_max) }}</td>
       </tr>
       {% endfor %}
     </table>

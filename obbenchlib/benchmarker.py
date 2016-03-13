@@ -168,7 +168,10 @@ class Benchmarker(object):
         result.set_value(obnam_subcommand, 'profile', self.read_profile())
         result.set_value(
             obnam_subcommand, 'profile-text', self.read_profile_text())
-        result.set_value(obnam_subcommand, 'log', self.read_log_file())
+
+        log = self.read_log_file()
+        result.set_value(obnam_subcommand, 'log', log)
+        result.set_value(obnam_subcommand, 'vmrss', self.find_max_vmrss(log))
 
     def run_obnam_backup(self):
         self.run_obnam(['backup'])
@@ -194,6 +197,14 @@ class Benchmarker(object):
     def read_log_file(self):
         with open(self._logfile) as f:
             return f.read()
+
+    def find_max_vmrss(self, log_text):
+        vmrss = 0
+        for line in log_text.splitlines():
+            words = line.split()
+            if len(words) == 6 and words[2:4] == ['DEBUG', 'VmRSS:']:
+                vmrss = max(vmrss, int(words[4]))
+        return vmrss * 1024
 
     def read_profile_text(self):
         f = StringIO.StringIO()

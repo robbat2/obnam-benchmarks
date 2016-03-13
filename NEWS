@@ -6,6 +6,8 @@ Version 0.12+git, not yet released
 
 * `obbench` now records and publishes the Obnam log file for each
   benchmark step.
+* `obbench` now measures Obnam memory usage, from the VmRSS reports in
+  the Obnam log file.
 
 Version 0.12, released 2016-03-08
 ----------------------------------

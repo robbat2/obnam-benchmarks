@@ -196,17 +196,21 @@ class BenchmarkPage(HtmlPage):
             'commit_date': result['commit_date'],
             'commit_id': result['commit_id'],
             'total': 0,
+            'vmrss_max': 0,
             'steps': [],
         }
         for i, step in enumerate(result['steps']):
             for step_name in step_names:
                 if step_name in step:
+                    vmrss = step[step_name].get('vmrss', 0) / 1024 / 1024
                     row['steps'].append({
                         'filename_txt': '{}_{}.txt'.format(
                             result['result_id'], i),
                         'duration': step[step_name]['duration'],
+                        'vmrss': vmrss,
                     })
                     row['total'] += row['steps'][-1]['duration']
+                    row['vmrss_max'] = max(row['vmrss_max'], vmrss)
                     break
         return row
 
