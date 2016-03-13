@@ -4,6 +4,8 @@ NEWS file for obbench
 Version 0.12+git, not yet released
 ----------------------------------
 
+* `obbench` now records and publishes the Obnam log file for each
+  benchmark step.
 
 Version 0.12, released 2016-03-08
 ----------------------------------
