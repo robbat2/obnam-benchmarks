@@ -92,7 +92,6 @@ class Benchmarker(object):
             f.write('repository = %s\n' % self._repodir)
             f.write('root = %s\n' % self._livedir)
             f.write('log-level = debug\n')
-            f.write('trace = obnamlib\n')
             f.write('log = %s\n' % self._logfile)
             for key, value in self.spec.get('obnam_config', {}).items():
                 f.write('%s = %s\n' % (key, value))
