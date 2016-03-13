@@ -1,8 +1,9 @@
-obbench (0.13+git-1) UNRELEASED; urgency=medium
+obbench (0.14-1) unstable; urgency=medium
 
   * Stop using obnam --trace to avoid huge log files.
+  * New upstream version.
 
- -- Lars Wirzenius <liw@liw.fi>  Sun, 13 Mar 2016 17:30:17 +0200
+ -- Lars Wirzenius <liw@liw.fi>  Sun, 13 Mar 2016 20:02:54 +0200
 
 obbench (0.13-1) unstable; urgency=medium
 
