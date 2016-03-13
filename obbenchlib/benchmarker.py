@@ -63,6 +63,7 @@ class Benchmarker(object):
             self._repodir = self.create_subdir(tempdir, 'repo')
             self._srcdir = self.create_subdir(tempdir, 'src')
             self._restored = self.create_subdir(tempdir, 'restored')
+            self._logfile = os.path.join(tempdir, 'obnam.log')
             self._config = self.prepare_obnam_config(tempdir)
 
             self.prepare_obnam(ref)
@@ -90,6 +91,9 @@ class Benchmarker(object):
             f.write('quiet = no\n')
             f.write('repository = %s\n' % self._repodir)
             f.write('root = %s\n' % self._livedir)
+            f.write('log-level = debug\n')
+            f.write('trace = obnamlib\n')
+            f.write('log = %s\n' % self._logfile)
             for key, value in self.spec.get('obnam_config', {}).items():
                 f.write('%s = %s\n' % (key, value))
         return config
@@ -146,6 +150,12 @@ class Benchmarker(object):
 
     def run_step_obnam(self, result, obnam_subcommand):
         print 'Running obnam:', obnam_subcommand
+
+        # Remove Obnam log file so it we later collect only the log
+        # for one invocation.
+        if os.path.exists(self._logfile):
+            os.remove(self._logfile)
+
         funcs = {
             'backup': self.run_obnam_backup,
             'restore': self.run_obnam_restore,
@@ -153,10 +163,12 @@ class Benchmarker(object):
         started = time.time()
         funcs[obnam_subcommand]()
         duration = time.time() - started
+
         result.set_value(obnam_subcommand, 'duration', duration)
         result.set_value(obnam_subcommand, 'profile', self.read_profile())
         result.set_value(
             obnam_subcommand, 'profile-text', self.read_profile_text())
+        result.set_value(obnam_subcommand, 'log', self.read_log_file())
 
     def run_obnam_backup(self):
         self.run_obnam(['backup'])
@@ -177,6 +189,10 @@ class Benchmarker(object):
     def read_profile(self):
         filename = os.path.join(self._srcdir, self.profile_name)
         with open(filename) as f:
+            return f.read()
+
+    def read_log_file(self):
+        with open(self._logfile) as f:
             return f.read()
 
     def read_profile_text(self):
