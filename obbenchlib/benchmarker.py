@@ -158,6 +158,7 @@ class Benchmarker(object):
         funcs = {
             'backup': self.run_obnam_backup,
             'restore': self.run_obnam_restore,
+            'forget': self.run_obnam_forget,
         }
         started = time.time()
         funcs[obnam_subcommand]()
@@ -178,6 +179,9 @@ class Benchmarker(object):
     def run_obnam_restore(self):
         cliapp.runcmd(['find', self._restored, '-delete'])
         self.run_obnam(['restore', '--to', self._restored])
+
+    def run_obnam_forget(self):
+        self.run_obnam(['forget'])
 
     def run_obnam(self, args):
         env = dict(os.environ)
