@@ -4,6 +4,9 @@ NEWS file for obbench
 Version 0.15+git, not yet released
 ----------------------------------
 
+* Obbench now has the option `--tmpdir` to allow setting the location
+  of temporary directories. The `TMPDIR` environment variable is used,
+  if the option isn't (with a fallback to `/tmp` if neither is used).
 
 Version 0.15, released 2016-03-16
 ----------------------------------

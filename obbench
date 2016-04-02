@@ -18,6 +18,7 @@
 
 
 import os
+import tempfile
 
 import cliapp
 import ttystatus
@@ -35,11 +36,19 @@ class ObnamBenchmarker(cliapp.Application):
             metavar='DIR',
             default='.')
         self.settings.string(
+            ['tmpdir'],
+            'use DIR for temporary files',
+            metavar='DIR',
+            default=tempfile.gettempdir())
+        self.settings.string(
             ['publish-command'],
             'after a successful run, run COMMAND',
             metavar='COMMAND')
 
     def process_args(self, args):
+        if self.settings['tmpdir']:
+            tempfile.tempdir = self.settings['tmpdir']
+
         spec = self.read_benchmark_spec(args[0])
         statedir = self.create_state_directory()
         self.clone_or_update_git(statedir, spec)
