@@ -45,16 +45,42 @@ class ObnamBenchmarker(cliapp.Application):
             'after a successful run, run COMMAND',
             metavar='COMMAND')
 
+        self.settings.boolean(
+            ['phase-update-git'],
+            'Phase: update-git',
+            metavar='BOOL',
+            default=True)
+        self.settings.boolean(
+            ['phase-run-benchmarks'],
+            'Phase: run benchmarks',
+            metavar='BOOL',
+            default=True)
+        self.settings.boolean(
+            ['phase-produce-html'],
+            'Phase: Produce HTML',
+            metavar='BOOL',
+            default=True)
+        self.settings.boolean(
+            ['phase-publish'],
+            'Phase: Publish results',
+            metavar='BOOL',
+            default=True)
+
     def process_args(self, args):
         if self.settings['tmpdir']:
             tempfile.tempdir = self.settings['tmpdir']
 
         spec = self.read_benchmark_spec(args[0])
         statedir = self.create_state_directory()
-        self.clone_or_update_git(statedir, spec)
-        self.run_benchmarks(statedir, spec, args[1:])
-        self.produce_html(statedir, spec)
-        self.publish(statedir)
+
+        if self.settings['phase-update-git']:
+            self.clone_or_update_git(statedir, spec)
+        if self.settings['phase-run-benchmarks']:
+            self.run_benchmarks(statedir, spec, args[1:])
+        if self.settings['phase-produce-html']:
+            self.produce_html(statedir, spec)
+        if self.settings['phase-publish']:
+            self.publish(statedir)
 
     def read_benchmark_spec(self, filename):
         with open(filename) as f:
