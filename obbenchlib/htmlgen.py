@@ -89,6 +89,12 @@ class HtmlPage(object):
     def format_markdown(self, text):
         return markdown.markdown(text)
 
+    def find_benchmark(self, benchmark_name):
+        for benchmark in self.spec['benchmarks']:
+            if benchmark['name'] == benchmark_name:
+                return benchmark
+        return {}
+
     @staticmethod
     def _get_step_name(step):
         for key in ['label', 'obnam']:
@@ -138,10 +144,12 @@ class FrontPage(HtmlPage):
 
     def duration(self, result):
         total = 0
-        for step in result['steps']:
-            for key in step:
-                if key != 'live':
-                    total += step[key].get('duration', 0)
+        benchmark = self.find_benchmark(result['benchmark_name'])
+        step_iter = zip(result['steps'], benchmark['steps'])
+        for result_step, benchmark_step in step_iter:
+            if benchmark_step.get('include_in_total', 'obnam' in benchmark_step):
+              for key in result_step:
+                  total += result_step[key].get('duration', 0)
         return total
 
 
@@ -175,12 +183,6 @@ class BenchmarkPage(HtmlPage):
             self.render('benchmark.j2', variables)
         )
 
-    def find_benchmark(self, benchmark_name):
-        for benchmark in self.spec['benchmarks']:
-            if benchmark['name'] == benchmark_name:
-                return benchmark
-        return {}
-
     def table_rows(self, benchmark):
         results = self.get_results_for_benchmark(benchmark)
         step_names = self.get_step_names(benchmark)
@@ -206,10 +208,12 @@ class BenchmarkPage(HtmlPage):
             'vmrss_max': 0,
             'steps': [],
         }
-        for i, step in enumerate(result['steps']):
+        benchmark = self.find_benchmark(result['benchmark_name'])
+        step_iter = zip(result['steps'], benchmark['steps'])
+        for i, (result_step, benchmark_step) in enumerate(step_iter):
             for step_name in step_names:
-                if step_name in step:
-                    vmrss = step[step_name].get('vmrss', 0) / 1024 / 1024
+                if step_name in result_step:
+                    vmrss = result_step[step_name].get('vmrss', 0) / 1024 / 1024
                     row['steps'].append({
                         'filename_txt': '{}_{}.txt'.format(
                             result['result_id'], i),
@@ -217,10 +221,11 @@ class BenchmarkPage(HtmlPage):
                             result['result_id'], i),
                         'filename_log': '{}_{}.log'.format(
                             result['result_id'], i),
-                        'duration': step[step_name]['duration'],
+                        'duration': result_step[step_name]['duration'],
                         'vmrss': vmrss,
                     })
-                    row['total'] += row['steps'][-1]['duration']
+                    if benchmark_step.get('include_in_total', 'obnam' in benchmark_step):
+                        row['total'] += row['steps'][-1]['duration']
                     row['vmrss_max'] = max(row['vmrss_max'], vmrss)
                     break
         return row
