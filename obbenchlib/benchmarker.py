@@ -60,6 +60,12 @@ class Benchmarker(object):
         # same commit are easy to align.
         self._timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
+        # Validate all benchmarks before running them
+        # This allows us to exit early, instead of the middle of a run.
+        for benchmark in self.spec['benchmarks']:
+            self.validate_benchmark(benchmark)
+
+        # Run benchmarks!
         for benchmark in self.spec['benchmarks']:
             tempdir = self.create_temp_dir()
             self._livedir = self.create_subdir(tempdir, 'live')
@@ -109,6 +115,11 @@ class Benchmarker(object):
             ['python', 'setup.py', 'build_ext', '-i'],
             cwd=self._srcdir)
 
+    def validate_benchmark(self, benchmark):
+        '''Validate the contents of a benchmark before running anything.'''
+        for step in benchmark['steps']:
+            self.validate_step(step)
+
     def run_benchmark(self, benchmark):
         print 'Running benchmark {}'.format(benchmark['name'])
         result = obbenchlib.Result()
@@ -117,6 +128,7 @@ class Benchmarker(object):
         result.commit_date = self.get_commit_date()
         result.commit_timestamp = self.get_commit_timestamp()
         result.commit_id = self.get_commit_id()
+        # Run all steps
         for step in benchmark['steps']:
             result.start_step()
             self.run_step(result, step)
@@ -141,6 +153,21 @@ class Benchmarker(object):
             ['git', 'rev-parse', self._ref],
             cwd=self.gitdir)
         return output.strip()
+
+    def validate_step(self, step):
+        '''Validate the contents of a single benchmark step
+           before running anything.'''
+        if 'live' in step and 'obnam' in step:
+            raise RuntimeError('Please update your spec to only' + \
+                    ' include one of live or obnam in each step.')
+        if 'live' in step:
+            if 'label' not in step:
+                raise RuntimeError('Please label all live steps.')
+        if 'obnam' in step:
+            pass
+        # By default, only include obnam steps in the total
+        if 'include_in_total' not in step:
+            step['include_in_total'] = 'obnam' in step
 
     def run_step(self, result, step):
         if 'live' in step:
