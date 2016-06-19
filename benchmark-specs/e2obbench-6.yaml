@@ -17,19 +17,28 @@ benchmarks:
     description: backup many small files
     steps:
       - live: genbackupdata . --create=1M --file-size=1
-        obnam: backup
+        label: generate_data
+        include_in_total: False
+      - obnam: backup
         reference: 150
+        include_in_total: True
       - obnam: restore
         reference: 150
+        include_in_total: True
       - obnam: backup
+        include_in_total: True
   - name: one_big_file
     description: backup one big file
     steps:
       - live: genbackupdata . --create=10G --file-size=999999T
-        obnam: backup
+        label: generate_data
+        include_in_total: False
+      - obnam: backup
         reference: 93
+        include_in_total: True
       - obnam: restore
         reference: 93
+        include_in_total: True
 reports_dir: /home/liw/benchmark-state/reports-6
 html_dir: /home/liw/benchmark-state/html-6
 publish_html: |
