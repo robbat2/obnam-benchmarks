@@ -89,8 +89,15 @@ class HtmlPage(object):
     def format_markdown(self, text):
         return markdown.markdown(text)
 
+    @staticmethod
+    def _get_step_name(step):
+        for key in ['label', 'obnam']:
+            if key in step:
+                return step[key]
+        raise RuntimeError("Don't know what to call step: %s" % (str(step), ))
+
     def get_step_names(self, benchmark):
-        return [step['obnam'] for step in benchmark['steps']]
+        return map(self._get_step_name, benchmark['steps'])
 
     def generate(self):
         raise NotImplementedError()

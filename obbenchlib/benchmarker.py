@@ -145,7 +145,8 @@ class Benchmarker(object):
     def run_step(self, result, step):
         if 'live' in step:
             self.run_step_live(result, step['live'])
-        self.run_step_obnam(result, step['obnam'])
+        if 'obnam' in step:
+            self.run_step_obnam(result, step['obnam'])
 
     def run_step_live(self, result, shell_command):
         print 'Running live:', shell_command
