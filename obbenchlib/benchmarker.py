@@ -171,18 +171,20 @@ class Benchmarker(object):
 
     def run_step(self, result, step):
         if 'live' in step:
-            self.run_step_live(result, step['live'])
+            self.run_step_live(result, step)
         if 'obnam' in step:
-            self.run_step_obnam(result, step['obnam'])
+            self.run_step_obnam(result, step)
 
-    def run_step_live(self, result, shell_command):
+    def run_step_live(self, result, step):
+        shell_command = step['live']
         print 'Running live:', shell_command
         started = time.time()
         cliapp.runcmd(['sh', '-euc', shell_command], cwd=self._livedir)
         duration = time.time() - started
-        result.set_value('live', 'duration', duration)
+        result.set_value(step['label'], 'duration', duration)
 
-    def run_step_obnam(self, result, obnam_subcommand):
+    def run_step_obnam(self, result, step):
+        obnam_subcommand = step['obnam']
         print 'Running obnam:', obnam_subcommand
 
         # Remove Obnam log file so it we later collect only the log
