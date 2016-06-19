@@ -43,11 +43,14 @@ class Benchmarker(object):
         self._restored = None
         self._timestamp = None
         self.spec = None
+        self._ref = None
 
     def run_benchmarks(self, ref):
         print
         print 'Running benchmarks for', ref
         print
+
+        self._ref = ref
 
         if not os.path.exists(self.resultdir):
             os.mkdir(self.resultdir)
@@ -66,7 +69,7 @@ class Benchmarker(object):
             self._logfile = os.path.join(tempdir, 'obnam.log')
             self._config = self.prepare_obnam_config(tempdir)
 
-            self.prepare_obnam(ref)
+            self.prepare_obnam()
             result = self.run_benchmark(benchmark)
             result.save_in_dir(self.resultdir)
 
@@ -97,9 +100,11 @@ class Benchmarker(object):
                 f.write('%s = %s\n' % (key, value))
         return config
 
-    def prepare_obnam(self, ref):
-        cliapp.runcmd(['git', 'clone', self.gitdir, self._srcdir])
-        cliapp.runcmd(['git', 'checkout', ref], cwd=self._srcdir)
+    def prepare_obnam(self):
+        cliapp.runcmd(
+            ['git', 'archive', '--format=tar', self._ref],
+            ['tar', 'x', '-C', self._srcdir],
+            cwd=self.gitdir)
         cliapp.runcmd(
             ['python', 'setup.py', 'build_ext', '-i'],
             cwd=self._srcdir)
@@ -124,15 +129,17 @@ class Benchmarker(object):
 
     def get_commit_timestamp(self):
         output = cliapp.runcmd(
-            ['git', 'show', '--date=iso', 'HEAD'],
-            cwd=self._srcdir)
+            ['git', 'show', '--date=iso', self._ref],
+            cwd=self.gitdir)
         for line in output.splitlines():
             if line.startswith('Date:'):
                 return line[len('Date:'):].strip()
         raise Exception('commit has no Date:')
 
     def get_commit_id(self):
-        output = cliapp.runcmd(['git', 'rev-parse', 'HEAD'], cwd=self._srcdir)
+        output = cliapp.runcmd(
+            ['git', 'rev-parse', self._ref],
+            cwd=self.gitdir)
         return output.strip()
 
     def run_step(self, result, step):
